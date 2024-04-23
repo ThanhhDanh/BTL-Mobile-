@@ -6,10 +6,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from courses import serializers, paginators, permission
-from courses.models import Category, Products, Orders, Reviews, User, Comment, Like, Shop, UserRole
+from courses.models import Category, Products, Orders, Reviews, User, Comment, Like, Shop
 from django.http import JsonResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
+
+
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -27,16 +29,21 @@ class ShopViewSet(viewsets.ViewSet,generics.CreateAPIView, generics.ListAPIView,
         if self.action.__eq__('list'):
             q = self.request.query_params.get('q')
             if q:
-                queryset = queryset.filter(Q(name__icontains=q) | Q(products__name__icontains=q))
+                queryset = queryset.filter(name__icontains=q)
+
+            product_name = self.request.query_params.get('p')
+            if product_name:
+                queryset = queryset.filter(product__name__icontains=product_name)
+
         return queryset
 
     @action(methods=['get'], url_path='products', detail=True)
-    def get_product(self, request, pk):
-        products = self.get_object().products_set.filter(active=True)
+    def get_products(self, request, pk):
+        products = self.get_object().product.filter(active=True)
         q = request.query_params.get('q')
         if q:
             # Lọc sản phẩm dựa trên tên sản phẩm và loại bỏ những sản phẩm không khớp
-            products = products.filter(Q(name__icontains=q))
+            products = products.filter(name__icontains=q)
 
         return Response(serializers.ProductSerializer(products, many=True).data,
                         status=status.HTTP_200_OK)
@@ -44,7 +51,7 @@ class ShopViewSet(viewsets.ViewSet,generics.CreateAPIView, generics.ListAPIView,
 
 class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView):
     queryset = Products.objects.prefetch_related('tags').filter(active=True)
-    serializer_class = serializers.ProductSerializer
+    serializer_class = serializers.ProductDetailsSerializer
     # pagination_class = paginators.ProductPaginator
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['name','priceProduct','shop_id']
@@ -69,31 +76,31 @@ class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAP
             queryset =queryset.filter(priceProduct__lte=max_price)
 
         return queryset
-#
-#     # def get_comment(self, request):
-#     #     queryset =self.queryset
-#     #     course_id = self.request.query_params.get('course')
-#     #     if course_id:
-#     #         queryset = queryset.filter(course_id=course_id)
-#     #
-#     #     return queryset
-#
-#     @action(methods=['get'], url_path='comments', detail=True)
-#     def get_comments(self, request, pk):
-#         comments = self.get_object().comment_set.order_by('-id')
-#         q = request.query_params.get('q')
-#         if q:
-#             comments = comments.filter(content__icontains=q)
-#
-#         #Phân trang cho comment
-#         paginator = paginators.CommentPaginator()
-#         page = paginator.paginate_queryset(comments, request)
-#         if page is not None:
-#             serializer = serializers.CommentSerializer(page, many=True)
-#             return paginator.get_paginated_response(serializer.data)
-#
-#         return Response(serializers.CommentSerializer(comments, many=True).data,
-#                         status=status.HTTP_200_OK)
+
+    # def get_comment(self, request):
+    #     queryset =self.queryset
+    #     comment_id = self.request.query_params.get('id')
+    #     if comment_id:
+    #         queryset = queryset.filter(comment_id=comment_id)
+    #
+    #     return queryset
+
+    @action(methods=['get'], url_path='comments', detail=True)
+    def get_comments(self, request, pk):
+        comments = self.get_object().comment_set.order_by('-id')
+        q = request.query_params.get('q')
+        if q:
+            comments = comments.filter(content__icontains=q)
+
+        #Phân trang cho comment
+        paginator = paginators.CommentPaginator()
+        page = paginator.paginate_queryset(comments, request)
+        if page is not None:
+            serializer = serializers.CommentSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        return Response(serializers.CommentSerializer(comments, many=True).data,
+                        status=status.HTTP_200_OK)
 #
 #     def get_permissions(self):
 #         if self.action in ['add_comment']:

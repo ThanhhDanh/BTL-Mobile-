@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     # 'rest_framework.authtoken',
     'oauth2_provider',
     'django_filters',
+    'bootstrap5'
 ]
 
 CKEDITOR_UPLOAD_PATH = "ckeditors/images/"

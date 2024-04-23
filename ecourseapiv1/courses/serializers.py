@@ -45,14 +45,14 @@ class ReviewSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Orders
-        fields = ['id', 'rating', 'comment_id', 'user_id', 'product_id']
+        fields = ['id', 'quantity', 'totalPrice', 'paymentMethod', 'orderStatus','user_id','product_id']
 
 
 class ShopSerializer(serializers.ModelSerializer):
-    products = ProductSerializer(many=True, read_only=True)
+    product = ProductSerializer(many=True, read_only=True)
     class Meta:
         model = Shop
-        fields = ['id','name','owner','address','products']
+        fields = ['id','name','owner','address','product']
 
 # class LessonDetailsSerializer(LessonSerializer):
 #     tags = TagSerializer(many=True)
@@ -102,8 +102,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
     class Meta:
         model = Comment
-        fields = ['id','content','user','created_date']
+        fields = ['id','content','user','created_date','product']
 
 
