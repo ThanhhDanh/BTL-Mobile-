@@ -4,7 +4,8 @@ from rest_framework import routers
 from courses import views
 from .admin import admin
 from django.views.generic import TemplateView
-from .admin import admin_site
+from .admin import admin_site, ShopAppAdminSite
+
 
 r = routers.DefaultRouter()
 r.register('categories', views.CategoryViewSet, basename='categories')
@@ -18,7 +19,7 @@ r.register('reviews', views.ReviewViewSet, basename='reviews')
 
 urlpatterns = [
     path('', include(r.urls)),
-    path('admin/',admin_site.urls),
-    # path('admin/stats/', admin.site.catch_all_view, name='stats'),
+    path('stats/', admin_site.stats_view , name='stats_view'),
+    #path('<int:pk>/', ShopListView.as_view() , name='shop'),
 ]
 

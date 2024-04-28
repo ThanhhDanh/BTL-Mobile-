@@ -10,8 +10,14 @@ from courses.models import Category, Products, Orders, Reviews, User, Comment, L
 from django.http import JsonResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
+from django.views.generic import ListView, DetailView
 
 
+# class ShopListView(ListView):
+#     query_set = Shop.objects.all().order_by('id')
+#     templates_name = 'admin/stats.html'
+#     context_object_name = 'Posts'
+#     paginate_by = 10
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -101,34 +107,34 @@ class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAP
 
         return Response(serializers.CommentSerializer(comments, many=True).data,
                         status=status.HTTP_200_OK)
-#
-#     def get_permissions(self):
-#         if self.action in ['add_comment']:
-#             return [permissions.IsAuthenticated()]
-#         return [permissions.AllowAny()]
-#
-#     def get_serializer_class(self):
-#         if self.request.user.is_authenticated:
-#             return serializers.AuthenticatedLessonDetailsSerializer
-#
-#         return self.serializer_class
-#
-#     @action(methods=['post'], url_path='comments',detail=True)
-#     def add_comment(self, request,pk):
-#         #Comment.onject.create()
-#         c = self.get_object().comment_set.create(content = request.data.get("content"), user = request.user)
-#
-#         return Response(serializers.CommentSerializer(c).data, status=status.HTTP_201_CREATED)
-#
-#
-#     @action(methods=['post'], url_path = 'like', detail=True)
-#     def like(self, request, pk):
-#         like,created = Like.objects.get_or_create(lesson = self.get_object(), user = request.user)
-#         if not created:
-#             like.active = not like.active
-#             like.save()
-#         return Response(serializers.LessonDetailsSerializer(self.get_object()).data)
-#
+
+    def get_permissions(self):
+        if self.action in ['add_comment','like']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
+    def get_serializer_class(self):
+        if self.request.user.is_authenticated:
+            return serializers.AuthenticatedProductDetailsSerializer
+
+        return self.serializer_class
+
+    @action(methods=['post'], url_path='comments',detail=True)
+    def add_comment(self, request,pk):
+        #Comment.onject.create()
+        c = self.get_object().comment_set.create(content = request.data.get("content"), user = request.user)
+
+        return Response(serializers.CommentSerializer(c).data, status=status.HTTP_201_CREATED)
+
+
+    @action(methods=['post'], url_path = 'like', detail=True)
+    def like(self, request, pk):
+        like,created = Like.objects.get_or_create(product = self.get_object(), user = request.user)
+        if not created:
+            like.active = not like.active
+            like.save()
+        return Response(serializers.ProductDetailsSerializer(self.get_object()).data)
+
 
 
 
@@ -190,7 +196,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIVi
 class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView):
     queryset = Comment.objects.all()
     serializer_class = serializers.CommentSerializer
-    permission_class = [permission.CommentOwner]
+    permission_class = [permission.AccountOwnerAuthenticated]
 
 
 class ReviewViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView):

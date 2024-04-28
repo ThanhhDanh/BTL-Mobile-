@@ -13,6 +13,11 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django import forms
 from django.db.models import Count
 from .dao import *
+from datetime import datetime
+from django.http import HttpResponse
+
+
+
 
 
 
@@ -67,46 +72,37 @@ class MyProductAdmin(admin.ModelAdmin):
         }
 
 
-# def stats_view(request):
-#     if request.method == "GET":
-#         month = request.GET.get('month', None)
-#         # Xử lý logic thống kê tại đây nếu cần
-#         context = {
-#             'month': month,
-#             # Các dữ liệu thống kê khác có thể được truyền vào context
-#         }
-#     return render(request, 'admin/stats.html', context)
-#
-#
-# class StatsAdminView(admin.AdminSite):
-#     site_header = 'Hệ Thống sàn giao dịch thương mại điện tử'
-#     def get_urls(self):
-#         urls = super().get_urls()
-#         custom_urls = [
-#             path('stats/', self.admin_view(stats_view), name='stats'),
-#         ]
-#         return custom_urls + urls
-#
-#
-# admin_site = StatsAdminView(name='Stats')
-
 class ShopAppAdminSite(admin.AdminSite):
     site_header = 'Hệ Thống sàn giao dịch thương mại điện tử'
+    index_title = 'Welcome'
+    stats_url = 'admin/stats.html'
 
     def get_urls(self):
         urls = super().get_urls()
-        return [path('shop-stats/', self.stats_view)] + super().get_urls()
+        return [path('stats/', self.stats_view, name='stats_view')] + super().get_urls()
+
+    def index(self, request, extra_context=None):
+        # Thêm extra_context để hiển thị liên kết trong trang admin
+        extra_context = extra_context or {}
+        extra_context['stats_url'] = self.stats_url  # URL của trang stats
+        return super().index(request, extra_context=extra_context)
+
 
     def stats_view(self, request):
         month = request.GET.get('month')
-        count_products = count_products_by_period(period=month)
-        shop_stats = Category.objects.annotate(c=Count('shop__id')).values('id', 'name', 'c')
+        if month is not None:
 
-        return TemplateResponse(request, 'admin/stats.html', {
-            "shop_stats": shop_stats,
-            'count_products': count_products,
-            'month': month
-        })
+            count_products = count_products_sold_by_period(period=month)
+
+            #shop_stats = Category.objects.annotate(c=Count('shop__id')).values('id', 'name', 'c')
+            shop_stats = count_products_by_month(month=month)
+            return TemplateResponse(request, 'admin/stats.html', {
+                "shop_stats": shop_stats,
+                'count_products': count_products,
+                'month': month
+                })
+        else:
+            return TemplateResponse(request, 'admin/stats.html')
 
 
 admin_site = ShopAppAdminSite(name='Stats')

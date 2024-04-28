@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "cloudinary": "^2.0.2"
+    "cloudinary": "^2.0.2",
+    "create-react-native-app": "^3.9.0"
   }
 }

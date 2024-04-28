@@ -2,129 +2,189 @@
 
 {% block content %}
 <div class="container">
-    <h1 class="text-center pb-4">THÔNG KÊ CỬA HÀNG</h1>
-    <div class="row">
-        <form class="d-flex text-center align-items-center">
-            <div class="form-group col-md-3">
-                <input type="text" name="month" placeholder="Nhập tháng..." class="form-control">
-            </div>
-            <div class="col-md-3">
-                <input type="submit" value="Thống kê" class="btn btn-outline-info">
-            </div>
-            <div class="form-group col-sm-3 text-end">Chọn loại:</div>
-            <div class="form-group col-md-3 text-start">
-                <select name="" id="transform" class="h-100 py-2 px-3">
-                    <option data-display="All" class="p-2">All</option>
-                    <option value="Table" class="p-2">Table</option>
-                    <option value="Chart" class="p-2">Chart</option>
-                    <option value="All" class="p-2">All</option>
-                </select>
-            </div>
-        </form>
-
-    </div>
-    <div class="container">
-        <ul class="py-4">
-            {% for c in count_products %}
-            <li><strong>{{ c.shop_id__name }}</strong>:{{c.product_count}} sản phẩm</li>
-            {% endfor %}
-        </ul>
-    </div>
-</div>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-6" id="divtable" style="display:block">
-            <table class="table">
-                <tr>
-                    <td>Cửa hàng</td>
-                    <td>Lượt bán</td>
-                    <td>Doanh thu</td>
-                </tr>
-                {% for i in count_products %}
-                <tr>
-                    <td>{{ i.shop_id__name }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-
+    <div class="container mb-3">
+        <h1 class="text-center pb-4">THÔNG KÊ TẦN SUẤT BÁN HÀNG CỦA CỬA HÀNG</h1>
+        <div class="row">
+            <form class="d-flex text-center align-items-center" action="{% url 'stats_view' %}" method="get">
+                <div class="form-group col-md-3">
+                    <input type="text" name="month" placeholder="Nhập tháng..." class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <input type="submit" value="Thống kê" class="btn btn-outline-info">
+                </div>
+                <div class="col-md-3">
+                    <h1>Bamboo</h1>
+                </div>
+                <!--            <div class="form-group col-sm-3 text-end">Chọn loại:</div>-->
+                <!--            <div class="form-group col-md-3 text-start">-->
+                <!--                <select name="" id="transform" class="h-100 py-2 px-3">-->
+                <!--                    <option data-display="All" class="p-2">All</option>-->
+                <!--                    <option value="Table" class="p-2">Table</option>-->
+                <!--                    <option value="Chart" class="p-2">Chart</option>-->
+                <!--                    <option value="All" class="p-2">All</option>-->
+                <!--                </select>-->
+                <!--            </div>-->
+            </form>
 
         </div>
-        <div class="col-md-6" id="divchart" style="display:block">
-            <div>
-                <canvas id="myChart"></canvas>
-            </div>
-        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6" id="divTable" style="display:block">
+                <table class="table">
+                    <tr class="text-center">
+                        <td>Cửa hàng</td>
+                        <td>Ngày mua</td>
+                        <td>Lượt bán</td>
+                        <td>Doanh thu</td>
+                    </tr>
+                    {% for i in count_products %}
+                    <tr class="text-center">
+                        <td>{{ i.shop_id__name }}</td>
+                        <td>{{ i.min_order_date }}</td>
+                        <td>{{ i.order_count}}</td>
+                        {% if i.total_revenue is None %}
+                        <td>0 VNĐ</td>
+                        {% else %}
+                        <td>{{ i.total_revenue}}0.000 VNĐ</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </table>
 
+
+            </div>
+            <div class="col-md-6" id="divchart" style="display:block;">
+                <div>
+                    <canvas class="w-100 h-100" id="myChart1"></canvas>
+                </div>
+            </div>
+
+        </div>
     </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="container">
+    <div class="container mb-3 pt-5">
+        <h1 class="text-center pb-4">THÔNG KÊ TỔNG SẢN PHẨM KINH DOANH CỦA CỬA HÀNG</h1>
+        <div class="row">
+            <form class="d-flex text-center align-items-center" action="{% url 'stats_view' %}" method="get">
+<!--                <div class="form-group col-md-3">-->
+<!--                    <input type="text" name="month" placeholder="Nhập tháng..." class="form-control">-->
+<!--                </div>-->
+<!--                <div class="col-md-3">-->
+<!--                    <input type="submit" value="Thống kê" class="btn btn-outline-info">-->
+<!--                </div>-->
+                <div class="col-md-12">
+                    <h1>Bamboo</h1>
+                </div>
+                <!--            <div class="form-group col-sm-3 text-end">Chọn loại:</div>-->
+                <!--            <div class="form-group col-md-3 text-start">-->
+                <!--                <select name="" id="transform" class="h-100 py-2 px-3">-->
+                <!--                    <option data-display="All" class="p-2">All</option>-->
+                <!--                    <option value="Table" class="p-2">Table</option>-->
+                <!--                    <option value="Chart" class="p-2">Chart</option>-->
+                <!--                    <option value="All" class="p-2">All</option>-->
+                <!--                </select>-->
+                <!--            </div>-->
+            </form>
+
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6" id="table" style="display:block">
+                <table class="table">
+                    <tr class="text-center">
+                        <td>Cửa hàng</td>
+                        <td>Thời gian kinh doanh</td>
+                        <td>Số lượng sản phẩm kinh doanh</td>
+                    </tr>
+                    {% for s in shop_stats %}
+                    <tr class="text-center">
+                        <td>{{ s.shop_id__name }}</td>
+                        <td>{{ s.product__created_date }}</td>
+                        <td>{{ s.total_products }} sản phẩm</td>
+
+                    </tr>
+                    {% endfor %}
+                </table>
+
+
+            </div>
+            <div class="col-md-6" id="chart" style="display:block;">
+                <div>
+                    <canvas class="w-100 h-100" id="myChart2"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script>
+         const ctx2 = document.getElementById('myChart2').getContext('2d');
+         const ctx1 = document.getElementById('myChart1').getContext('2d');
+            let labelShop = [];
+            let dataShop = [];
+
+            let labels = [];
+            let datas = [];
+
+            {% for c in shop_stats %}
+                dataShop.push({{ c.total_products }})
+                labelShop.push('{{ c.shop_id__name }}')
+            {% endfor %}
+
+            {% for c in count_products %}
+                datas.push({{ c.product_count }})
+                labels.push('{{ c.shop_id__name }}')
+            {% endfor %}
+
+
+        window.onload = function() {
+            drawChartRevenue(ctx1,labels,datas,title='Số lượng lượt bán')
+            drawChartRevenue(ctx2,labelShop,dataShop,title='Số lượng sản phẩm kinh doanh')
+        }
+
+
+
+    </script>
+
+
+
+
+
+</div>
 <script>
-    window.onload = function() {
-        selectedStatic.selectedIndex = -1;
-        const ctx = document.getElementById('myChart').getContext('2d')
-
-         let labels = [];
-        let data = [];
-        let a,b,c;
+    function drawChartRevenue(ctx,labels,data, title='Doanh thu'){
         let colors = [];
-        let borderColors = [];
+        for (let i = 0; i < data.length; i++){
+            colors.push(`rgba(${parseInt(Math.random()*255)},
+            ${parseInt(Math.random()*255)},
+            ${parseInt(Math.random()*255)}, 0.7)`);
+         }
 
-        {% for c in count_products %}
-            data.push({{ c.product_count }})
-            labels.push('{{ c.shop_id__name }}')
-            a = Math.random()*255;
-            b = Math.random()*255;
-            c = Math.random()*255;
-            colors.push(`rgba(${a},${b},${c},0.2)`)
-            borderColors.push(`rgba(${a},${b},${c},0.2)`)
-        {% endfor %}
-
-
-
-      new Chart(ctx, {
+        new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: labels,
-        datasets: [{
-            label: '#So luong',
-            data: data,
-            borderWidth: 1,
-            backgroundColor: colors,
-            borderColor: borderColors
-          }]
+            labels: labels,
+            datasets: [{
+                    label: title,
+                    data: data,
+                    borderWidth: 1,
+                    backgroundColor: colors
+                }]
         },
         options: {
-          scales: {
-            y: {
-              beginAtZero: true
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
             }
-          }
         }
-      });
-    }
-
-
-    var selectedStatic = document.getElementById('transform')
-    var chart = document.getElementById('divchart')
-    var table = document.getElementById('divtable')
-    selectedStatic.addEventListener('change', function() {
-      if(selectedStatic.value == 'Table'){
-          table.style.display = 'block'
-          chart.style.display = 'none'
-      }
-      if(selectedStatic.value == 'Chart'){
-          chart.style.display = 'block'
-          table.style.display = 'none'
-          chart.style.text = ''
-      }
-      if(selectedStatic.value == 'All'){
-          table.style.display = 'block'
-          chart.style.display = 'block'
-
-
-
+    });
+}
 </script>
+
 {% load bootstrap5 %}
 {% bootstrap_css %}
 {% bootstrap_javascript %}
