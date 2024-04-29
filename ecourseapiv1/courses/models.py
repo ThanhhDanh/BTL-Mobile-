@@ -48,6 +48,7 @@ class Category(BaseModel):
 
 class Shop(ItemBase):
     name = models.CharField(max_length=100)
+    image = CloudinaryField(null=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shops')
     address = models.CharField(max_length=255)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)

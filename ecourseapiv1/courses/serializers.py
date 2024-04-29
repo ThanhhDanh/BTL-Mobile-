@@ -52,7 +52,7 @@ class ShopSerializer(serializers.ModelSerializer):
     product = ProductSerializer(many=True, read_only=True)
     class Meta:
         model = Shop
-        fields = ['id','name','owner','address','product']
+        fields = ['id','name','image','owner','address','product']
 
 # class LessonDetailsSerializer(LessonSerializer):
 #     tags = TagSerializer(many=True)

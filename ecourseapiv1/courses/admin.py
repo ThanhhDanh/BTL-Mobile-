@@ -72,7 +72,31 @@ class MyProductAdmin(admin.ModelAdmin):
         }
 
 
-class ShopAppAdminSite(admin.AdminSite):
+class ShopForm(forms.ModelForm):
+    description = forms.CharField(widget=CKEditorUploadingWidget)
+
+    class Meta:
+        model = Shop
+        fields = '__all__'
+
+
+class MyShopAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name', 'owner', 'address', 'created_date', 'updated_date', 'active']
+    search_fields = ['name', 'description']
+    list_filter = ['id', 'created_date', 'name']
+    readonly_fields = ['my_image']
+    form = ShopForm
+
+    def my_image(self, instance):
+        if instance.image:
+            if "cloudinary.com" in instance.image.url:
+                return mark_safe(f"<img width='140' src='{instance.image.url}' />")
+            else:
+                return mark_safe(f"<img width='140' src='/static/{instance.image.name}' />")
+        return "Không có ảnh"
+
+
+class AppAdminSite(admin.AdminSite):
     site_header = 'Hệ Thống sàn giao dịch thương mại điện tử'
     index_title = 'Welcome'
     stats_url = 'admin/stats.html'
@@ -105,26 +129,16 @@ class ShopAppAdminSite(admin.AdminSite):
             return TemplateResponse(request, 'admin/stats.html')
 
 
-admin_site = ShopAppAdminSite(name='Stats')
+admin_site = AppAdminSite(name='Stats')
 
 
-
-# admin.site.register(Category)
-# admin.site.register(Products, MyProductAdmin)
-# admin.site.register(Reviews)
-# admin.site.register(Orders)
-# admin.site.register(Shop)
-# admin.site.register(User, MyUserAdmin)
-# admin.site.register(Tag)
-# admin.site.register(Comment)
-# admin.site.register(Like)
 
 
 admin_site.register(Category)
 admin_site.register(Products, MyProductAdmin)
 admin_site.register(Reviews)
 admin_site.register(Orders)
-admin_site.register(Shop)
+admin_site.register(Shop,MyShopAdmin)
 admin_site.register(User)
 admin_site.register(Tag)
 admin_site.register(Comment)

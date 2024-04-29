@@ -4,7 +4,7 @@ from rest_framework import routers
 from courses import views
 from .admin import admin
 from django.views.generic import TemplateView
-from .admin import admin_site, ShopAppAdminSite
+from .admin import admin_site
 
 
 r = routers.DefaultRouter()
