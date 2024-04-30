@@ -47,14 +47,13 @@ const Shop = ()=>{
             <View style={[MyStyle.row,MyStyle.justifyConCenter]}>
                 {
                     categories ===null?<ActivityIndicator/>:<>
-                    {categories.map(c=><Chip style={MyStyle.margin5} key={c.id} icon="shape">{c.name}</Chip>)}
+                    {categories.map(c=><Chip style={MyStyle.margin10} key={c.id} icon="shape">{c.name}</Chip>)}
                     </>
                 }
             </View>
             <ScrollView>
-                {shops.map(c=><List.Item key={c.id} title={['Shop: ',c.name]} description={['Địa chỉ: '+c.address+'\n'+'Chủ Shop: '+c.owner]}
-                left={()=><Image style={MyStyle.image} source={{uri: c.image}} />}
-                />)}
+                {/* {shops.map(c=><List.Item style={MyStyle.margin10} key={c.id} title={['Shop: ',c.name]} description={['Địa chỉ: '+c.address+'\n'+'Chủ Shop: '+c.owner]} left={()=><Image style={MyStyle.img} source={{uri: c.image}} />}/>)} */}
+                {shops.map(s=><List.Item key={s.id} left={()=><Image source={{uri: s.image}}/>} />)}
                 {loading && <ActivityIndicator/>}
             </ScrollView>
         </View>

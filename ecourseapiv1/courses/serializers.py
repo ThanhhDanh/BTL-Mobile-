@@ -48,18 +48,19 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ['id', 'quantity', 'totalPrice', 'paymentMethod', 'orderStatus','user_id','product_id']
 
 
-class ShopSerializer(serializers.ModelSerializer):
+class ShopSerializer(ItemSerializer):
     product = ProductSerializer(many=True, read_only=True)
     class Meta:
         model = Shop
         fields = ['id','name','image','owner','address','product']
 
-# class LessonDetailsSerializer(LessonSerializer):
-#     tags = TagSerializer(many=True)
-#
-#     class Meta:
-#         model = LessonSerializer.Meta.model
-#         fields = LessonSerializer.Meta.fields + ['content', 'tags']
+
+class ShopDetailsSerializer(ShopSerializer):
+    tags = TagSerializer(many=True)
+
+    class Meta:
+        model = ShopSerializer.Meta.model
+        fields = ShopSerializer.Meta.fields + ['tags']
 
 
 class AuthenticatedProductDetailsSerializer(ProductDetailsSerializer):

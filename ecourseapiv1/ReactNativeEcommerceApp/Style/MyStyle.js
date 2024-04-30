@@ -4,7 +4,7 @@ export default StyleSheet.create({
     container: {
         flex: 1,
         marginTop: 60,
-        // alignItems: 'center',
+        alignItems: 'center',
     },
     labels: {
         fontSize:30,
@@ -22,12 +22,12 @@ export default StyleSheet.create({
     margin_auto: {
         margin: 'auto',
     },
-    margin5: {
+    margin10: {
         margin: 10,
     },
-    image: {
-        width: 150,
-        height: 150,
-        borderRadius: 50,
+    img: {
+        width: 80,
+        height: 80,
+        borderRadius: 20,
     }
 });

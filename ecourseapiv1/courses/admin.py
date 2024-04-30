@@ -81,13 +81,9 @@ class ShopForm(forms.ModelForm):
 
 
 class MyShopAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'owner', 'address', 'created_date', 'updated_date', 'active']
-    search_fields = ['name', 'description']
-    list_filter = ['id', 'created_date', 'name']
-    readonly_fields = ['my_image']
-    form = ShopForm
-
-    def my_image(self, instance):
+    readonly_fields = ['avatar']
+    form=ShopForm
+    def avatar(self, instance):
         if instance.image:
             if "cloudinary.com" in instance.image.url:
                 return mark_safe(f"<img width='140' src='{instance.image.url}' />")

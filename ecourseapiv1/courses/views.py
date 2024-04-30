@@ -30,6 +30,12 @@ class ShopViewSet(viewsets.ViewSet,generics.CreateAPIView, generics.ListAPIView,
     serializer_class = serializers.ShopSerializer
     # pagination_class = paginators.ProductPaginator
 
+    def get_serializer_class(self):
+        if self.request.user.is_authenticated:
+            return serializers.AuthenticatedProductDetailsSerializer
+
+        return self.serializer_class
+
     def get_queryset(self):
         queryset = self.queryset
         if self.action.__eq__('list'):
@@ -55,7 +61,7 @@ class ShopViewSet(viewsets.ViewSet,generics.CreateAPIView, generics.ListAPIView,
                         status=status.HTTP_200_OK)
 
 
-class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView):
+class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView,generics.CreateAPIView):
     queryset = Products.objects.prefetch_related('tags').filter(active=True)
     serializer_class = serializers.ProductDetailsSerializer
     # pagination_class = paginators.ProductPaginator
