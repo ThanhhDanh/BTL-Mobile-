@@ -11,13 +11,9 @@ from django.http import JsonResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 from django.views.generic import ListView, DetailView
+from django.contrib.auth.models import AnonymousUser
 
 
-# class ShopListView(ListView):
-#     query_set = Shop.objects.all().order_by('id')
-#     templates_name = 'admin/stats.html'
-#     context_object_name = 'Posts'
-#     paginate_by = 10
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -115,9 +111,35 @@ class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAP
                         status=status.HTTP_200_OK)
 
     def get_permissions(self):
-        if self.action in ['add_comment','like']:
-            return [permissions.IsAuthenticated()]
+        if self.action in ['list', 'create']:
+            if self.request.user.is_authenticated:
+                return [permissions.IsAuthenticated()]
+            else:
+                return [permissions.AllowAny()]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            if self.request.user.is_authenticated and self.request.user.role in [self.RoleChoices.ADMIN,
+                                                                                 self.RoleChoices.EMPLOYEE,
+                                                                                 self.RoleChoices.SELLER]:
+                return [permissions.IsAuthenticated()]
+            else:
+                return [permissions.IsAdminUser()]
         return [permissions.AllowAny()]
+
+    # def get_permissions(self):
+    #     print(self.action)
+    #     if self.action in ['list', 'create']:
+    #         if isinstance(self.request.user, AnonymousUser):
+    #             return [permissions.IsAuthenticated()]
+    #         else:
+    #             if(self.request.user.is_authenticated and (self.request.user.role in [User.RoleChoices.SELLER,
+    #                                                                                   User.RoleChoices.EMPLOYEE,
+    #                                                                                   User.RoleChoices.ADMIN]
+    #                                                        or self.request.user.is_authenticated)):
+    #                 return [permissions.IsAuthenticated()]
+    #     return [permissions.AllowAny()]
+
+    # if self.action in ['add_comment','like']:
+    #     return [permissions.IsAuthenticated()]
 
     def get_serializer_class(self):
         if self.request.user.is_authenticated:

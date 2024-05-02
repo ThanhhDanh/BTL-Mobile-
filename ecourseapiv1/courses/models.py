@@ -76,6 +76,7 @@ class Orders(ItemBase):
     orderStatus = models.CharField(max_length = 50)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     product_id = models.ForeignKey(Products, on_delete=models.CASCADE, null=True, blank=True)
+    shop_id = models.ForeignKey(Shop, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f'Order #{self.id}'

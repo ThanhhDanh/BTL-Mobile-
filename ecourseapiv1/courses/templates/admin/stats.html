@@ -15,15 +15,6 @@
                 <div class="col-md-3">
                     <h1>Bamboo</h1>
                 </div>
-                <!--            <div class="form-group col-sm-3 text-end">Chọn loại:</div>-->
-                <!--            <div class="form-group col-md-3 text-start">-->
-                <!--                <select name="" id="transform" class="h-100 py-2 px-3">-->
-                <!--                    <option data-display="All" class="p-2">All</option>-->
-                <!--                    <option value="Table" class="p-2">Table</option>-->
-                <!--                    <option value="Chart" class="p-2">Chart</option>-->
-                <!--                    <option value="All" class="p-2">All</option>-->
-                <!--                </select>-->
-                <!--            </div>-->
             </form>
 
         </div>
@@ -42,8 +33,8 @@
                     <tr class="text-center">
                         <td>{{ i.shop_id__name }}</td>
                         <td>{{ i.min_order_date }}</td>
-                        <td>{{ i.order_count}}</td>
-                        {% if i.total_revenue is None %}
+                        <td>{{ i.ordersStatus}}</td>
+                        {% if i.ordersStatus == 0 %}
                         <td>0 VNĐ</td>
                         {% else %}
                         <td>{{ i.total_revenue}}0.000 VNĐ</td>
@@ -69,12 +60,12 @@
         <h1 class="text-center pb-4">THÔNG KÊ TỔNG SẢN PHẨM KINH DOANH CỦA CỬA HÀNG</h1>
         <div class="row">
             <form class="d-flex text-center align-items-center" action="{% url 'stats_view' %}" method="get">
-<!--                <div class="form-group col-md-3">-->
-<!--                    <input type="text" name="month" placeholder="Nhập tháng..." class="form-control">-->
-<!--                </div>-->
-<!--                <div class="col-md-3">-->
-<!--                    <input type="submit" value="Thống kê" class="btn btn-outline-info">-->
-<!--                </div>-->
+                <!--                <div class="form-group col-md-3">-->
+                <!--                    <input type="text" name="month" placeholder="Nhập tháng..." class="form-control">-->
+                <!--                </div>-->
+                <!--                <div class="col-md-3">-->
+                <!--                    <input type="submit" value="Thống kê" class="btn btn-outline-info">-->
+                <!--                </div>-->
                 <div class="col-md-12">
                     <h1>Bamboo</h1>
                 </div>
@@ -121,36 +112,32 @@
         </div>
     </div>
     <script>
-         const ctx2 = document.getElementById('myChart2').getContext('2d');
-         const ctx1 = document.getElementById('myChart1').getContext('2d');
-            let labelShop = [];
-            let dataShop = [];
+        const ctx2 = document.getElementById('myChart2').getContext('2d');
+        const ctx1 = document.getElementById('myChart1').getContext('2d');
+           let labelShop = [];
+           let dataShop = [];
 
-            let labels = [];
-            let datas = [];
+           let labels = [];
+           let datas = [];
 
-            {% for c in shop_stats %}
-                dataShop.push({{ c.total_products }})
-                labelShop.push('{{ c.shop_id__name }}')
-            {% endfor %}
+           {% for c in shop_stats %}
+               dataShop.push({{ c.total_products }})
+               labelShop.push('{{ c.shop_id__name }}')
+           {% endfor %}
 
-            {% for c in count_products %}
-                datas.push({{ c.product_count }})
-                labels.push('{{ c.shop_id__name }}')
-            {% endfor %}
+           {% for c in count_products %}
+               datas.push({{ c.ordersStatus }})
+               labels.push('{{ c.shop_id__name }}')
+           {% endfor %}
 
 
-        window.onload = function() {
-            drawChartRevenue(ctx1,labels,datas,title='Số lượng lượt bán')
-            drawChartRevenue(ctx2,labelShop,dataShop,title='Số lượng sản phẩm kinh doanh')
-        }
-
+       window.onload = function() {
+           drawChartRevenue(ctx1,labels,datas,title='Số lượng lượt bán')
+           drawChartRevenue(ctx2,labelShop,dataShop,title='Số lượng sản phẩm kinh doanh')
+       }
 
 
     </script>
-
-
-
 
 
 </div>

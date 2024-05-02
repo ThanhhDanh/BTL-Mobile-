@@ -111,11 +111,12 @@ class AppAdminSite(admin.AdminSite):
     def stats_view(self, request):
         month = request.GET.get('month')
         if month is not None:
-
+            print(month)
             count_products = count_products_sold_by_period(period=month)
+            print(count_products)
 
-            #shop_stats = Category.objects.annotate(c=Count('shop__id')).values('id', 'name', 'c')
-            shop_stats = count_products_by_month(month=month)
+            # shop_stats = Category.objects.annotate(c=Count('shop__id')).values('id', 'name', 'c')
+            shop_stats = count_products_by_month(period=month)
             return TemplateResponse(request, 'admin/stats.html', {
                 "shop_stats": shop_stats,
                 'count_products': count_products,
