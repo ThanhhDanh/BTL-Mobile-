@@ -19,6 +19,8 @@ import com.facebook.soloader.SoLoader
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ReactNativeHostWrapper
 
+import com.reactnativecommunity.checkbox.ReactCheckBoxPackage;
+
 class MainApplication : Application(), ReactApplication {
 
   override val reactNativeHost: ReactNativeHost = ReactNativeHostWrapper(
@@ -61,5 +63,12 @@ class MainApplication : Application(), ReactApplication {
   override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
     ApplicationLifecycleDispatcher.onConfigurationChanged(this, newConfig)
+  }
+  @Override
+  protected List<ReactPackage> getPackages() {
+      return Arrays.asList(
+              new MainReactPackage(),
+              new ReactCheckBoxPackage()
+      );
   }
 }

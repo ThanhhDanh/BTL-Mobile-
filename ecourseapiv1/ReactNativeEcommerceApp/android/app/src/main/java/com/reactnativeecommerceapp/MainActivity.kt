@@ -2,7 +2,6 @@ package com.reactnativeecommerceapp
 
 import android.os.Build
 import android.os.Bundle
-
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -57,5 +56,11 @@ class MainActivity : ReactActivity() {
       // Use the default back button implementation on Android S
       // because it's doing more than [Activity.moveTaskToBack] in fact.
       super.invokeDefaultOnBackPressed()
+  }
+
+  class MainActivity: ReactActivity() {
+      override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(null)
+      }
   }
 }

@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-aa$3sc8quxnhel+xv)^gyjje5ez123w3&431*erx19o=d&akid
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 #https://thanhdanh.pythonanywhere.com/
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 import pymysql
 
@@ -160,5 +160,5 @@ REST_FRAMEWORK = {
     ]
 }
 
-client_id = 'GCoXEPFNLLSLXO3Uv3u1GOlZiow1q9EFNyR3DnJ3'
-client_secret = 'mOcSyi1orI1JTzUB9pwrwk84gB3wwrSPwk35Yj2spe4MM4OlyFOeriIguc1ejyGAbmO1NsVcIVjhmB6LhhbJk4kj5AhErt2IpuoeuFXXkkbnknuaaRZ1W8nliC6wAAE4'
+client_id = 'hGTgI136AQk94I8JuY4mkFKesDaFyohdf0Wm1rd4'
+client_secret = 'pagQY5E46yJDmmXXDzA1JdS9yd09aThE1otII6olTvvbBf1XG4mazubgPpZQHCOSJqZzR72xv7OoDPp4aT72pT9D9DbtS2diDYrnG9ZNZxIV94O4XigOIIx8zY2jOoYn'

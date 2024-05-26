@@ -44,7 +44,7 @@ class MyUserAdmin(admin.ModelAdmin):
 
 
 class ProductForm(forms.ModelForm):
-    description = forms.CharField(widget=CKEditorUploadingWidget)
+    # description = forms.CharField(widget=CKEditorUploadingWidget)
 
     class Meta:
         model = Products
@@ -52,7 +52,7 @@ class ProductForm(forms.ModelForm):
 
 
 class MyProductAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'priceProduct', 'created_date', 'updated_date', 'active']
+    list_display = ['id', 'name', 'priceProduct','content', 'created_date', 'updated_date', 'active']
     search_fields = ['name', 'description']
     list_filter = ['id', 'created_date', 'name']
     readonly_fields = ['my_image']
@@ -73,7 +73,7 @@ class MyProductAdmin(admin.ModelAdmin):
 
 
 class ShopForm(forms.ModelForm):
-    description = forms.CharField(widget=CKEditorUploadingWidget)
+    # description = forms.CharField(widget=CKEditorUploadingWidget)
 
     class Meta:
         model = Shop
