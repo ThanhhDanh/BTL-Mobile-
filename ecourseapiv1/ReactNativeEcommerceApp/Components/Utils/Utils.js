@@ -1,21 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import APIs, { authAPI, endpoints } from "../../Configs/APIs";
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { useFocusEffect } from '@react-navigation/native';
 
-const Rating = ({ productId }) => {
+const Rating = ({ productId, onRatingCalculated}) => {
   const [soldQuantity, setSoldQuantity] = useState(0);
   const [starRating, setStarRating] = useState(0);
 
   const loadOrders = async () => {
     try {
       let res = await APIs.get(endpoints['orders']);
-      const orders = res.data.filter(order => order.orderStatus === "Đã Thanh Toán" && order.product_id === productId);
+      const orders = res.data.filter(o => {
+          let totalQuantity = 0;        
+          if(o.orderStatus === 'Đã thanh toán'){
+            if(o.product_id == productId){
+                  totalQuantity += o.quantity;
+            }
+          }
+        return totalQuantity;
+      });
       const quantity = orders.reduce((total, order) => total + order.quantity, 0);
       setSoldQuantity(quantity);
       calculateStarRating(quantity);
     } catch (err) {
-      console.info("Lỗi: ", err.message);
+      console.info("Lỗi rating: ", err.message);
     }
   };
 
@@ -31,11 +40,17 @@ const Rating = ({ productId }) => {
       rating = 0;
     }
     setStarRating(rating);
+    onRatingCalculated(rating);
   };
 
-  useEffect(() => {
-    loadOrders();
-  }, [productId]);
+  // useEffect(() => {
+  //   loadOrders();
+  // }, [productId]);
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders();
+    }, [productId])
+  )
 
   const renderStars = () => {
     const stars = [];
@@ -85,12 +100,27 @@ const styles = StyleSheet.create({
 export default Rating;
 
 
-export const getOrdersByStatus = async (status) => {
+export const getOrdersByStatus = async (statuss) => {
   try {
       const res = await authAPI().get(endpoints.orders);
-      return res.data.filter((order) => order.status === status);
+      let result = res.data.filter((order) => order.status === statuss);
+      return result;
   } catch (error) {
-      console.error(`Lỗi khi tải đơn hàng ${status}:`, error.message);
+      console.error(`Lỗi khi tải đơn hàng ${statuss}:`, error.message);
       return [];
   }
+};
+
+
+export const formatPrice = (price) => {
+  // Chuyển số thành chuỗi
+  const priceString = price.toString();
+  // Tạo mảng chứa các ký tự
+  const characters = priceString.split('');
+  // Chèn dấu chấm sau mỗi 3 số từ phía sau
+  for (let i = characters.length - 3; i > 0; i -= 3) {
+      characters.splice(i, 0,'.');
+  }
+  // Nối lại thành chuỗi và thêm '000 đ' ở cuối
+  return characters.join('')+ ` đ`;
 };

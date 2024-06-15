@@ -6,21 +6,35 @@ import { useCart } from "../Templates/CartContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Logout({ navigation }) {
-    const [, dispatch] = useContext(MyContext);
+    const {user, dispatch, setIsAuthenticated,setRole} = useContext(MyContext);
     const { clearCart } = useCart();
     
+
     const handleLogout = async () => {
         try {
-            // Xóa thông tin người dùng khỏi AsyncStorage
-            await AsyncStorage.removeItem('user');
-            // Dispatch hành động logout để cập nhật trạng thái đăng xuất trong context
-            dispatch({
-                type: "logout"
-            });
-            // Xóa giỏ hàng
-            clearCart();
-            // Điều hướng người dùng về trang chủ
-            navigation.navigate('Trang chủ');
+            // Ensure user exists before attempting to logout
+            if (user && user.username) {
+                await AsyncStorage.removeItem('user');
+                await AsyncStorage.removeItem('access-token');
+                // await AsyncStorage.removeItem(`shippingOrders_${user.username}_${user.id}`);
+                // await AsyncStorage.removeItem(`notifications_${user.username}_${user.id}`);
+                
+
+                // Clear user context
+                dispatch({ type: "logout" });
+
+                // Clear cart context
+                clearCart();
+
+                // Reset authentication and role
+                setIsAuthenticated(false);
+                setRole(null);
+
+                // Navigate to the home screen
+                navigation.navigate('Trang chủ');
+            } else {
+                console.error('Lỗi khi đăng xuất: User is not defined');
+            }
         } catch (error) {
             console.error('Lỗi khi đăng xuất:', error);
         }

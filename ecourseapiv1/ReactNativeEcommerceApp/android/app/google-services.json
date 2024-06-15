@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "372150130897",
+    "project_id": "ecommerce-3c002",
+    "storage_bucket": "ecommerce-3c002.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:372150130897:android:557de3c0198e2cf6d90df0",
+        "android_client_info": {
+          "package_name": "com.reactnativeecommerceapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7vvSvZDtgh962nIyDFK-v2hQ03bKHVvI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -4,8 +4,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import Shop from './Components/Shop/Shop';
 import Login from './Components/User/Login';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Home from './Components/Templates/Home';
+import { createNativeStackNavigator } from '@react-navigation/native-stack'; 
 import setting from './Components/Templates/setting';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/FontAwesome6';
@@ -18,7 +17,7 @@ import ProductDetails from './Components/Product/ProductDetails';
 import Order from './Components/Order/Order';
 import CartScreen from './Components/Progress/Cart';
 import { CartProvider } from './Components/Templates/CartContext';
-import { authAPI, endpoints } from './Configs/APIs';
+import APIs, { authAPI, endpoints } from './Configs/APIs';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Setting from './Components/Templates/setting';
 import Logout from './Components/User/Logout';
@@ -27,7 +26,14 @@ import WaitConfirmationScreen from './Components/Templates/WaitConfirmation';
 import OrderDetail from './Components/Templates/OrderDetail';
 import NotificationScreen from './Components/Templates/NotificationScreen';
 import ShippingScreen from './Components/Templates/WaitShipping';
-
+import ReviewScreen from './Components/Review/Review';
+import ReviewDetailScreen from './Components/Review/ReviewDetail';
+import CategoryDetails from './Components/Categories/CategoriesDetail';
+import ShopDetail from './Components/Shop/ShopDetail';
+import CompareScreen from './Components/Templates/CompareScreen';
+import ShopItemByName from './Components/Shop/ShopItem';
+import { onAuthStateChanged } from 'firebase/auth';
+import Chat from './Components/Chat/Chat';
 
 
 
@@ -35,24 +41,32 @@ import ShippingScreen from './Components/Templates/WaitShipping';
 const Stack = createNativeStackNavigator();
 
 const MyStack = () => {
-  // const [user, dispatch] = useContext(MyContext);
-  // const [isAuthenticated, setIsAuthenticated] = useState(false);
-  // const [role, setRole] = useState();
-  const [user, dispatch, isAuthenticated, setIsAuthenticated, role, setRole] = useContext(MyContext);
+  const {user, dispatch, isAuthenticated, setIsAuthenticated, role, setRole} = useContext(MyContext);
 
   const getAccessToken = async () => {
     try {
-      const token = await AsyncStorage.getItem('access-token');
+      const token = await AsyncStorage.getItem('refresh-token');
       if (token !== null) {
         console.log('Token:', token);
-        let user = await authAPI(token).get(endpoints['current-user']);
-        console.log(user.data);
+        let userRes = await APIs.post(endpoints['login'],{
+            'refresh_token': token,
+            'client_id': "hGTgI136AQk94I8JuY4mkFKesDaFyohdf0Wm1rd4",
+            'client_secret': "pagQY5E46yJDmmXXDzA1JdS9yd09aThE1otII6olTvvbBf1XG4mazubgPpZQHCOSJqZzR72xv7OoDPp4aT72pT9D9DbtS2diDYrnG9ZNZxIV94O4XigOIIx8zY2jOoYn",
+            "grant_type": "refresh_token"
+        },
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+        await AsyncStorage.setItem('access-token', res.data.access_token)
+        await AsyncStorage.setItem('refresh-token', res.data.refresh_token)
+        let user = await authAPI(res.data.access_token).get(endpoints['current-user']);
         dispatch({
           "type": "login",
           "payload": user.data
         });
-        setIsAuthenticated(true);
-        setRole(user.data.role);
       } else {
         console.log('Không tìm thấy token trong AsyncStorage');
       }
@@ -69,13 +83,7 @@ const MyStack = () => {
     <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen name='Shop' component={Shop} options={{title: 'Cửa hàng'}} />
       <Stack.Screen name='Product' component={Product} options={{title: 'Sản phẩm'}} />
-      <Stack.Screen name='ProductDetails' component={ProductDetails} options={{title: 'Chi tiết sản phẩm'}} />
       <Stack.Screen name='Orders' component={Order} options={{title: 'Đơn đặt hàng'}} />
-      <Stack.Screen name="Cart" component={CartScreen} options={{ title: 'Giỏ Hàng' }} />
-      <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} options={{ title: 'Thanh Toán' }} />
-      <Stack.Screen name="WaitConfirmation" component={WaitConfirmationScreen} options={{ title: 'Chờ xác nhận' }} />
-      <Stack.Screen name="OrderDetail" component={OrderDetail} options={{ title: 'Chi tiết hóa đơn' }} />
-      <Stack.Screen name="WaitShipping" component={ShippingScreen} options={{ title: 'Chi tiết hóa đơn' }} />
     </Stack.Navigator>
   );
 }
@@ -85,7 +93,7 @@ const Tab = createBottomTabNavigator();
 
 function MyTabs() {
 
-  const [user] = useContext(MyContext); 
+  const {user, notificationCount} = useContext(MyContext); 
 
   return (
     <Tab.Navigator screenOptions={{headerShown: false}}>
@@ -96,7 +104,8 @@ function MyTabs() {
 
       <Tab.Screen name='Thông báo' component={NotificationScreen} 
           options={{tabBarIcon: ()=>
-            <Icon style={{fontSize: 30}} name='bell'/>
+            <Icon style={{fontSize: 30}} name='bell'/>,
+            tabBarBadge: notificationCount > 0 ? notificationCount : null
       }}/>
        
        <Tab.Screen 
@@ -112,7 +121,15 @@ function MyTabs() {
       <Tab.Screen name="CheckoutScreen" component={CheckoutScreen} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
       <Tab.Screen name="WaitConfirmation" component={WaitConfirmationScreen} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
       <Tab.Screen name="OrderDetail" component={OrderDetail} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
-      <Tab.Screen name="ShippingScreen" component={ShippingScreen} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="WaitShipping" component={ShippingScreen} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="Review" component={ReviewScreen} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="ReviewDetail" component={ReviewDetailScreen} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="CategoryDetail" component={CategoryDetails} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="ProductDetails" component={ProductDetails} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="ShopDetails" component={ShopDetail} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="CompareScreen" component={CompareScreen} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="ShopItemByName" component={ShopItemByName} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="Chat" component={Chat} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
     </Tab.Navigator>
   );
 }
@@ -123,21 +140,33 @@ export default function App() {
   const [user, dispatch] = useReducer(MyUserReducer, null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [role, setRole] = useState();
+  const [notificationCount, setNotificationCount] = useState(0);
 
   useEffect(() => {
     const getAccessToken = async () => {
       try {
-        const token = await AsyncStorage.getItem('access-token');
+        const token = await AsyncStorage.getItem('refresh-token');
         if (token !== null) {
           console.log('Token:', token);
-          let user = await authAPI(token).get(endpoints['current-user']);
-          console.log(user.data);
+          let userRes = await APIs.post(endpoints['login'],{
+              'refresh_token': token,
+              'client_id': "hGTgI136AQk94I8JuY4mkFKesDaFyohdf0Wm1rd4",
+              'client_secret': "pagQY5E46yJDmmXXDzA1JdS9yd09aThE1otII6olTvvbBf1XG4mazubgPpZQHCOSJqZzR72xv7OoDPp4aT72pT9D9DbtS2diDYrnG9ZNZxIV94O4XigOIIx8zY2jOoYn",
+              "grant_type": "refresh_token"
+          },
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+          await AsyncStorage.setItem('access-token', res.data.access_token)
+          await AsyncStorage.setItem('refresh-token', res.data.refresh_token)
+          let user = await authAPI(res.data.access_token).get(endpoints['current-user']);
           dispatch({
             "type": "login",
             "payload": user.data
           });
-          setIsAuthenticated(true);
-          setRole(user.data.role);
         } else {
           console.log('Không tìm thấy token trong AsyncStorage');
         }
@@ -150,7 +179,7 @@ export default function App() {
   }, []);
 
   return (
-   <MyContext.Provider value={[user, dispatch, isAuthenticated,setIsAuthenticated,role,setRole]}>
+   <MyContext.Provider value={{user, dispatch, isAuthenticated,setIsAuthenticated,role,setRole, notificationCount,setNotificationCount}}>
       <NavigationContainer>
         <CartProvider>
             <MyTabs/>

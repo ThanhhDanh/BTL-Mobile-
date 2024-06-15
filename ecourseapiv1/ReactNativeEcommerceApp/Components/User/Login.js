@@ -1,4 +1,4 @@
-import React, {Component, useContext, useState} from "react";
+import React, {Component, useContext, useEffect, useState} from "react";
 import {
     SafeAreaView,
     View,Text,TouchableOpacity,
@@ -18,6 +18,8 @@ import APIs, { authAPI, endpoints } from "../../Configs/APIs";
 import MyContext from "../Templates/MyContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCart } from "../Templates/CartContext";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "../../Configs/firebase";
 
 
 const windowWidth = Dimensions.get('window').width;
@@ -29,58 +31,6 @@ export default Login =({navigation})=>{
     const [page, setPage] = useState(SIGN_IN);
     const [isRegister, setIsRegister] = useState(false);
     return (
-        // <ImageBackground style={{height: '100%', width: '100%', backgroundColor:'rgba(0,0,0,.05'}} resizeMode="stretch">
-        //     <StatusBar barStyle="Light-content"/>
-        //     <SafeAreaView style={MyStyle.container}>
-        //         {/* <View style={{marginTop: 0.1 * windowHeight, width: '100%', backgroundColor:'#6b52ae1a'}}>
-        //             <Text style={{fontSize: 22,textAlign:'center',margin: 10}}>Chào mừng các bạn đến với Bamboo. Đăng nhập ngay!</Text>
-        //         </View> */}
-        //         <View style={MyStyle.setForm}>
-        //             {/* username & password */}
-        //             <View style={{width: '100%', height: '20%', marginTop: 0.3 * windowHeight}}>
-        //                 <Text style={{textAlign: 'center', fontSize:20, marginBottom:30}}>Đăng nhập</Text>
-        //                 <View style={MyStyle.input}>
-        //                     <Text style={MyStyle.letterColor}>Username:</Text>
-        //                     <TextInput textAlign="right" autoCapitalize="none" style={MyStyle.textInput}></TextInput>
-        //                 </View>
-        //                 <View style={[MyStyle.input,{marginTop: 10}]}>
-        //                     <Text style={MyStyle.letterColor}>Password:</Text>
-        //                     <TextInput textAlign="right" autoCapitalize="none" style={[MyStyle.textInput,{paddingRight: 30}]} secureTextEntry={visible ? false : true}></TextInput>
-        //                     <TouchableOpacity 
-        //                     style={{ position: 'absolute', right: 0}}
-        //                     onPress={()=>{
-        //                         setVisible(!visible);
-        //                     }}
-        //                     >
-        //                         {visible ?
-        //                         <Icon style={{marginLeft: 10, fontSize: 18}} name="eye"/>
-        //                         :
-        //                         <Icon style={{marginLeft: 10, fontSize: 18}} name="eye-slash"/>
-        //                         }
-        //                     </TouchableOpacity>
-        //                 </View>
-        //             </View>
-        //             {/* Buttons */}
-        //             <View style={MyStyle.btns}>
-        //                 <TouchableOpacity 
-        //                     style={[MyStyle.btn,{backgroundColor:"#000"}]}
-        //                     onPress={()=>{
-        //                         navigation.navigate('Home');
-        //                     }}
-        //                 >
-        //                     <Text style={MyStyle.buttonText}>Đăng nhập</Text>  
-        //                 </TouchableOpacity>
-        //                 <TouchableOpacity style={[MyStyle.btn,{marginTop: 20, backgroundColor:"#9a9a9d"}]}
-        //                     onPress={()=>{
-        //                         navigation.navigate('Register');
-        //                     }}
-        //                 >
-        //                     <Text style={MyStyle.buttonText}>Đăng ký</Text>
-        //                 </TouchableOpacity>
-        //             </View>
-        //         </View>
-        //     </SafeAreaView>
-        // </ImageBackground>
         <View style={MyStyle.setForm}>
             <View style={{width: '100%',height:'25%'}}>
                 <HeaderLogin page={page} setPage={setPage} isRegister={isRegister} setIsRegister={setIsRegister}/>
@@ -130,8 +80,8 @@ const BodyLogin = ({navigation})=>{
     const [visible, setVisible] = useState(false);
     const [username, setUsername] = useState();
     const [password, setPassword] = useState();
-    const [user, dispatch,isAuthenticated, setIsAuthenticated, role, setRole]= useContext(MyContext);
-    const { setCartItems } = useCart()
+    const {dispatch, setIsAuthenticated, setRole}= useContext(MyContext);
+    const { setCartItems, setShippingOrders, setWaitingOrders  } = useCart()
     
     const formLogin = async () =>{
         try {
@@ -152,22 +102,42 @@ const BodyLogin = ({navigation})=>{
 
             await AsyncStorage.setItem('access-token', res.data.access_token)
 
-            let user = await authAPI(res.data.access_token).get(endpoints['current-user']);
-            dispatch({
-                "type": "login",
-                "payload": user.data
-            });
-            console.log(user.data.role);
-            let user_role = user.data.role;
-            setRole(user_role);
-            setIsAuthenticated(true);
+            let userRes = await authAPI(res.data.access_token).get(endpoints['current-user']);
+            if (userRes && userRes.data) {
+                dispatch({
+                    "type": "login",
+                    "payload": userRes.data
+                });
+    
+                setIsAuthenticated(true);
+    
+                console.log('userRes: ' + JSON.stringify(userRes.data,null,2));
+    
+                const userData = userRes.data;
+    
+                if(userData.email !== "" && password !== "") {
+                    signInWithEmailAndPassword(auth,userData.email, password)
+                    .then(()=> console.log("Login successful"))
+                    .catch((err)=> console.log("Login error: " + err.message))
+                }
+            }
 
-            // Tải giỏ hàng từ AsyncStorage với tên người dùng
-            const savedCart = await AsyncStorage.setItem(`cart_${user.data.username}`, res.data.access_token);
-            console.info(`cart_${user.data.username}`)
-            console.info("saved cart: " + savedCart);
+            // Lấy giỏ hàng từ AsyncStorage
+            const savedCart = await AsyncStorage.getItem(`cart_${userRes.data.username}_${userRes.id}`);
             if (savedCart) {
                 setCartItems(JSON.parse(savedCart));
+            }
+
+            // Lấy đơn hàng chờ xác nhận từ AsyncStorage
+            const savedWaitingOrders = await AsyncStorage.getItem(`waitingOrders_${userRes.data.username}_${userRes.id}`);
+            if (savedWaitingOrders) {
+                setWaitingOrders(JSON.parse(savedWaitingOrders));
+            }
+
+            // Lấy đơn hàng chờ giao hàng từ AsyncStorage
+            const savedShippingOrders = await AsyncStorage.getItem(`shippingOrders_${userRes.data.username}_${userRes.id}`);
+            if (savedShippingOrders) {
+                setShippingOrders(JSON.parse(savedShippingOrders));
             }
 
             navigation.navigate("Trang chủ")
@@ -263,7 +233,7 @@ const FormRegister = ({ page, setPage,isRegister,setIsRegister, navigation}) => 
         "address":"",
         "username": "",
         "password": "",
-        "avatar": ""
+        "avatar": " ",
     });
 
 
@@ -280,6 +250,7 @@ const FormRegister = ({ page, setPage,isRegister,setIsRegister, navigation}) => 
                 formData.append(key, user[key])
         }
 
+
         try {
             let res = await APIs.post(endpoints['users'], formData, {
                 headers: {
@@ -289,8 +260,40 @@ const FormRegister = ({ page, setPage,isRegister,setIsRegister, navigation}) => 
         
             console.info(res.data);
             setIsRegister(true);//Đăng ký thành công
+            if(user.email !== "" && user.password !== "") {
+                createUserWithEmailAndPassword(auth,user.email, user.password)
+                .then((userCredential) => {
+                    console.log("Register successful");
+
+                    const currentUser = userCredential.user;
+
+                    // Bước 3: Cập nhật hồ sơ người dùng trong Firebase Authentication với thông tin avatar
+                    if (user.avatar) {
+                        console.info("Avatar")
+                        updateProfile(currentUser, {
+                            displayName: `${user.first_name} ${user.last_name}`,
+                            photoURL: user.avatar.uri
+                        }).then(() => {
+                            console.log("Profile updated successfully");
+                        }).catch((error) => {
+                            console.log("Error updating profile: " + error.message);
+                        });
+                    } else {
+                        updateProfile(currentUser, {
+                            displayName: `${user.first_name} ${user.last_name}`
+                        }).then(() => {
+                            console.log("Profile updated successfully");
+                        }).catch((error) => {
+                            console.log("Error updating profile: " + error.message);
+                        });
+                    }
+                })
+                .catch((err) => {
+                    console.log("Register error: " + err.message);
+                });
+            }
         } catch (ex) {
-            console.log("Lỗi!!");
+            console.log("Lỗi!!: "+ex.message);
         }
     };
 
@@ -308,7 +311,7 @@ const FormRegister = ({ page, setPage,isRegister,setIsRegister, navigation}) => 
     
     const handleChooseAvatar = async () => {
         const {status}  = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status === 'granted') {
+        if (status !== 'granted') {
             alert("Permissions denied!");
         } else {
             const result = await ImagePicker.launchImageLibraryAsync();
@@ -400,7 +403,7 @@ const FormRegister = ({ page, setPage,isRegister,setIsRegister, navigation}) => 
             <View style={{flexDirection: 'row', alignItems:'center',width: windowWidth - 60, marginLeft: 30, marginTop: 20, height: 40, backgroundColor: '#fff'}}>
                 <Icon style={{fontSize: 20, marginLeft: 10}} name="user-tag"/>
                 <TextInput autoCapitalize="none" style={{height: '100%', flex: 1, marginLeft: 10, fontSize: 20}} 
-                    onChangeText={t => change("address",t)} value={user.address}
+                    onChangeText={(t) => change("address",t)} value={user.address}
                     placeholder="Enter your address"/>
             </View>
             <View style={{flexDirection: 'row', alignItems:'center',width: windowWidth - 60, marginLeft: 30, marginTop: 20, height: 40, backgroundColor: '#fff'}}>

@@ -1,21 +1,25 @@
 import { View, Text, SafeAreaView, FlatList, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import MyStyle from "../../Style/MyStyle";
 import MyContext from "../Templates/MyContext";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { authAPI, endpoints } from "../../Configs/APIs";
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import moment from 'moment';
 import { getOrdersByStatus } from "../Utils/Utils";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from "@react-navigation/native";
 
 export default WaitingConfirmationScreen = ({navigation, route, previousScreen}) => {
-    const [user] = useContext(MyContext);
+    const {user} = useContext(MyContext);
     const [waitingConfirmationOrders, setWaitingConfirmationOrders] = useState([]);
-    const [numberOfOrders, setNumberOfOrders] = useState(0);
+    const [numberOfConfirmationOrders, setNumberOfConfirmationOrders] = useState(0);
+    const key = user ? `waitingOrders_${user.username}_${user.id}`:'';
 
-    useEffect(() => {
-        loadWaitingConfirmationOrders();
-    }, [user]);
+    useFocusEffect(
+        useCallback(() => {
+            loadWaitingConfirmationOrders();
+        }, [user])
+    );
 
     useEffect(() => {
         const timers = waitingConfirmationOrders.map(order => 
@@ -27,19 +31,34 @@ export default WaitingConfirmationScreen = ({navigation, route, previousScreen})
     const loadWaitingConfirmationOrders = async () => {
         if(user) {
             try {
-                const savedOrders = await AsyncStorage.getItem(`waitingOrders_${user.username}`);
-                if(savedOrders){
-                    setWaitingConfirmationOrders(JSON.parse(savedOrders));
-                }else{
-                    const orders = await getOrdersByStatus("Chờ xác nhận");
-                    setWaitingConfirmationOrders(orders);
-                    setNumberOfOrders(orders.length); // Cập nhật số lượng đơn hàng
+                const savedOrders = await AsyncStorage.getItem(key);
+                // console.info("Dữ liệu từ AsyncStorage:", savedOrders);
+                let orders=[];
+                if (savedOrders && savedOrders.length === 0) {
+                    orders = JSON.parse(savedOrders);
+                } else {
+                    orders = await getOrdersByStatus("Chờ xác nhận");
+                    // console.info("Dữ liệu từ cơ sở dữ liệu:", orders);
+                    if (orders && orders.length > 0) {
+                        await AsyncStorage.setItem(key, JSON.stringify(orders));
+                    } else {
+                        console.info("Không có đơn hàng chờ xác nhận.");
+                    }
                 }
+                // Lọc các đơn hàng theo user ID
+                const filteredOrders = orders.filter(order => order.user_id === user.id);
+                setWaitingConfirmationOrders(filteredOrders);
+                setNumberOfConfirmationOrders(filteredOrders.length);
             } catch (error) {
-                console.error('Failed to load orders from storage:', error);
+                console.error('Lỗi khi tải đơn hàng từ bộ nhớ:', error);
             }
         }
     };
+
+    // useEffect(() => {
+    //     loadWaitingConfirmationOrders();
+    // }, [user]);
+
 
     const moveToShipping = async (orderId) => {
         try {
@@ -47,11 +66,12 @@ export default WaitingConfirmationScreen = ({navigation, route, previousScreen})
             await authAPI().patch(`${endpoints.orders}${orderId}/`, { status: "Chờ giao hàng" });
     
             // Cập nhật danh sách đơn hàng chờ xác nhận
-            setWaitingConfirmationOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
-            
-            setNumberOfOrders(prevCount => prevCount - 1); // Giảm số lượng đơn hàng
-            //Lấy hóa đơn của tài khoản đó 
-            await AsyncStorage.setItem(`waitingOrders_${user.username}`, JSON.stringify(waitingConfirmationOrders));
+            const updatedOrders = waitingConfirmationOrders.filter(order => order.id !== orderId);
+            setWaitingConfirmationOrders(updatedOrders);
+            setNumberOfConfirmationOrders(updatedOrders.length);
+
+            // Lưu trạng thái mới vào AsyncStorage
+            await AsyncStorage.setItem(key, JSON.stringify(updatedOrders));
             
             console.log(`Đơn hàng ${orderId} đã chuyển sang trạng thái Chờ giao hàng`);
         } catch (error) {
@@ -61,7 +81,7 @@ export default WaitingConfirmationScreen = ({navigation, route, previousScreen})
 
     const handleOrderPress = (orderId) => {
         // Navigate to the order detail screen with orderId and previousScreen parameters
-        navigation.navigate('OrderDetail', { orderId: orderId, previousScreen: 'WaitingConfirmation' });
+        navigation.navigate('OrderDetail', { orderId: orderId, previousScreen: 'WaitConfirmation'});
     };
 
     const cancelOrder = async orderId => {
@@ -70,11 +90,12 @@ export default WaitingConfirmationScreen = ({navigation, route, previousScreen})
             await authAPI().delete(`${endpoints.orders}${orderId}/`);
 
             // Xóa đơn hàng khỏi danh sách chờ xác nhận
-            setWaitingConfirmationOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+            const updatedOrders = waitingConfirmationOrders.filter(order => order.id !== orderId);
+            setWaitingConfirmationOrders(updatedOrders);
+            setNumberOfConfirmationOrders(updatedOrders.length);
             
-            // setNumberOfOrders(prevCount => prevCount - 1); // Giảm số lượng đơn hàng
-            
-            await AsyncStorage.setItem(`waitingOrders_${user.username}`, JSON.stringify(waitingConfirmationOrders));
+            // Lưu trạng thái mới vào AsyncStorage
+            await AsyncStorage.setItem(key, JSON.stringify(updatedOrders));
             
             Alert.alert('Thành công', 'Đã hủy đơn hàng thành công.');
         } catch (error) {
@@ -100,25 +121,26 @@ export default WaitingConfirmationScreen = ({navigation, route, previousScreen})
     return (
         <SafeAreaView style={MyStyle.setForm}>
             <View style={{height: '10%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#ccc'}}>
-                <TouchableOpacity onPress={() => navigation.navigate("Setting",{previousScreen: "WaitConfirmation"})}
+                <TouchableOpacity onPress={() => navigation.navigate("Setting",{previousScreen: "WaitConfirmation",numberOfConfirmationOrders: numberOfConfirmationOrders})}
                             style={{width: 40, height: 40, zIndex: 1, position: 'absolute', top: 20, left: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
                     <Icon style={{fontSize: 15, color: '#fff'}} name="chevron-left"/>
                 </TouchableOpacity>
                 <Text style={{fontSize: 25, fontWeight: 'bold'}}>Chờ xác nhận</Text>
             </View>
-            {numberOfOrders === 0 ? (
-                <View style={styles.emptyCartContainer}>
-                    <Text style={styles.emptyCartText}>Giỏ hàng của bạn đang trống</Text>
-                </View>
-            ): (
+            {numberOfConfirmationOrders > 0 ? (
                 <View style={{flex: 1}}>
                     <FlatList
                     data={waitingConfirmationOrders}
                     renderItem={renderItem}
                     keyExtractor={(item) => item.id.toString()}
-                    />
+                />
+                </View>
+            ): (
+                <View style={styles.emptyCartContainer}>
+                        <Text style={styles.emptyCartText}>Không có đơn hàng chờ xác nhận</Text>
                 </View>
             )}
+            
         </SafeAreaView>
     );
 };

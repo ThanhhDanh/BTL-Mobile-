@@ -1,47 +1,54 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { authAPI, endpoints } from '../../Configs/APIs';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import MyStyle from '../../Style/MyStyle';
+import { useFocusEffect } from '@react-navigation/native';
 
 const windowHeight = Dimensions.get('window').height;
 const windowWidth = Dimensions.get('window').width;
 
 const OrderDetail = ({ route, navigation }) => {
     const { orderId, previousScreen } = route.params;
-    const [orderDetail, setOrderDetail] = useState(null);
-    const [productDetail, setProductDetail] = useState([]);
-
+    const [orderDetail, setOrderDetail] = useState({});
+    const [productDetail, setProductDetail] = useState({});
 
     const handleBackPress = () => {
         navigation.navigate(previousScreen);
     };
-    console.info(orderId)
-    const fetchOrderDetail = async () => {
-        try {
-            const res = await authAPI().get(`${endpoints.orders}${orderId}/`);
-            setOrderDetail(res.data);
-        } catch (error) {
-            console.error("Lỗi khi tải chi tiết đơn hàng:", error.message);
-        }
-    };
 
-    const fetchProductDetail = async () => {
-        try {
-            const res = await authAPI().get(`${endpoints.products}${orderDetail.product_id}/`);
-            setProductDetail(res.data);
-        } catch (error) {
-            console.error("Lỗi khi tải chi tiết đơn hàng:", error.message);
-        }
-    };
+    useEffect(() => {
+        return () => {
+            setOrderDetail({});
+            setProductDetail({});
+        };
+    }, []);
     
     useEffect(() => {
+        const fetchOrderDetail = async () => {
+            try {
+                const res = await authAPI().get(`${endpoints.orders}${orderId}/`);
+                setOrderDetail(res.data);
+            } catch (error) {
+                console.error("Lỗi khi tải chi tiết đơn hàng:", error.message);
+            }
+        };
+
         fetchOrderDetail();
-    }, []);
+    }, [orderId]);
 
     useEffect(() => {
-        if (orderDetail) {
+        if (orderDetail && orderDetail.product_id) {
+            const fetchProductDetail = async () => {
+                try {
+                    const res = await authAPI().get(`${endpoints.products}${orderDetail.product_id}/`);
+                    setProductDetail(res.data);
+                } catch (error) {
+                    console.error("Lỗi khi tải chi tiết sản phẩm:", error.message);
+                }
+            };
+
             fetchProductDetail();
         }
     }, [orderDetail]);

@@ -2,25 +2,28 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 
-const BASE_URL = 'http://192.168.1.9:8000/';
+const BASE_URL = 'http://192.168.1.133:8000/';
 
 export const endpoints = {
     'categories':'/categories/',
     'shops':'/shops/',
+    'shop-details': (shopId) => `/shops/${shopId}/`,
     'products':'/products/',
     'product-details': (productId) => `/products/${productId}/`,
     'comments': (productId) => `/products/${productId}/comment/`,
     'add-comment': (productId) => `/products/${productId}/commentss/`,
+    'review':  '/reviews/',
     'users':'/users/',
     'orders':'/orders/',
     'tags':'/tags/',
     'current-user': '/users/current-user/',
     'login': '/o/token/',
+    'momo': '/momo/process/'
 }
 
 
 export const authAPI = (accessToken) => axios.create({
-    baseURL: "http://192.168.1.9:8000/",
+    baseURL: BASE_URL,
     headers: {
         Authorization: `bearer ${accessToken?accessToken:AsyncStorage.getItem("access-token")}`
     }

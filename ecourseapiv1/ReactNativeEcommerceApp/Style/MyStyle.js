@@ -102,7 +102,7 @@ export default StyleSheet.create({
         borderRadius: 10, // Bo tròn các góc
     },
     searchResults: {
-        maxHeight: 200, // Đặt chiều cao tối đa cho kết quả tìm kiếm      
+        maxHeight: 350, // Đặt chiều cao tối đa cho kết quả tìm kiếm      
         position: 'absolute',
         top: 100,
         left: 0,
@@ -118,17 +118,17 @@ export default StyleSheet.create({
         height: windowHeight,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
         zIndex: 1,
-        padding: 20,
     },
     cateItem: {
         borderWidth: 1,
         backgroundColor: 'rgba(52, 52, 52, 0.2)', 
-        marginBottom: 20, height: 50, 
+        marginBottom: 20,
         borderRadius: 20, 
         flexDirection: 'row', 
         alignItems: 'center', 
         justifyContent: 'center',
-    
+        height: 50, 
+        width: '100%'
     },
     hotText: {
         fontSize: 18,
@@ -139,8 +139,8 @@ export default StyleSheet.create({
         height: 0,
         backgroundColor: 'transparent',
         borderStyle: 'solid',
-        borderTopWidth: 5,
-        borderBottomWidth: 5,
+        borderTopWidth: 8,
+        borderBottomWidth: 8,
         borderRightWidth: 10,
         borderTopColor: 'transparent',
         borderBottomColor: 'transparent',

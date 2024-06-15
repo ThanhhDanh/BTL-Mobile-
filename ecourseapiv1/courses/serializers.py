@@ -2,11 +2,6 @@ from rest_framework import serializers
 from courses.models import Category, Products, Reviews, Orders, Tag, User, Comment, Shop
 
 
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category
-        fields = '__all__'
-
 
 class ItemSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
@@ -20,14 +15,6 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ['id', 'name']
-
-
-
-
-class ReviewSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Reviews
-        fields = ['id', 'rating', 'comment_id', 'user_id', 'product_id']
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -60,7 +47,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'email', 'username', 'password', 'avatar']
+        fields = ['id', 'first_name', 'last_name', 'email', 'username', 'password', 'avatar','address']
         extra_kwargs = {
             'password': {
                 'write_only': True
@@ -72,14 +59,24 @@ class CommentSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     class Meta:
         model = Comment
-        fields = ['id','content','user','created_date']
+        fields = ['id','content','user','user_id','product_id','created_date']
+
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    comment_content = serializers.CharField(source='comment_id.content', read_only=True)
+    class Meta:
+        model = Reviews
+        fields = ['id', 'rating', 'comment_id','comment_content', 'user_id', 'product_id']
+
 
 
 class ProductSerializer(ItemSerializer):
     comment = CommentSerializer(read_only=True, many=True)
+    reviews = ReviewSerializer(many=True,read_only=True, source='reviews_set')
     class Meta:
         model = Products
-        fields = ['id', 'name', 'priceProduct' ,'image', 'created_date', 'updated_date', 'category_id','shop_id','comment']
+        fields = ['id', 'name', 'priceProduct' ,'image','gender', 'created_date', 'updated_date', 'category_id','shop_id','comment','reviews']
 
 
 class ProductDetailsSerializer(ProductSerializer):
@@ -92,10 +89,10 @@ class ProductDetailsSerializer(ProductSerializer):
 
 
 class ShopSerializer(ItemSerializer):
-    product = ProductSerializer(many=True, read_only=True)
+    products = ProductSerializer(many=True, read_only=True, source='product')
     class Meta:
         model = Shop
-        fields = ['id','name','image','owner','address','product']
+        fields = ['id','name','image','owner','address','products']
 
 
 class ShopDetailsSerializer(ShopSerializer):
@@ -104,6 +101,16 @@ class ShopDetailsSerializer(ShopSerializer):
     class Meta:
         model = ShopSerializer.Meta.model
         fields = ShopSerializer.Meta.fields + ['tags']
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    shops = ShopSerializer(many=True, read_only=True, source='shop_set')
+    class Meta:
+        model = Category
+        fields = ['id','name','created_date','updated_date','shops']
+
+
+
 
 
 class AuthenticatedProductDetailsSerializer(ProductDetailsSerializer):

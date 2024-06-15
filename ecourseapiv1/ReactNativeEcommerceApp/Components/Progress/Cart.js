@@ -6,6 +6,7 @@ import { useCart } from "../Templates/CartContext";
 import { StyleSheet } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { useFocusEffect } from '@react-navigation/native';
+import { Alert } from 'react-native';
 
 export default function CartScreen({ navigation, route }) {
     const { cartItems, removeFromCart } = useCart();

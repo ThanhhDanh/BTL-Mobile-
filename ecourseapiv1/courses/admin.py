@@ -52,7 +52,7 @@ class ProductForm(forms.ModelForm):
 
 
 class MyProductAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'priceProduct','content', 'created_date', 'updated_date', 'active']
+    list_display = ['id', 'name', 'priceProduct','content','gender', 'created_date', 'updated_date', 'active']
     search_fields = ['name', 'description']
     list_filter = ['id', 'created_date', 'name']
     readonly_fields = ['my_image']
@@ -90,6 +90,21 @@ class MyShopAdmin(admin.ModelAdmin):
             else:
                 return mark_safe(f"<img width='140' src='/static/{instance.image.name}' />")
         return "Không có ảnh"
+
+class OrderForm(forms.ModelForm):
+
+    class Meta:
+        model = Orders
+        fields = '__all__'
+
+# class OrderFeeAdmin(admin.ModelAdmin):
+#
+#     list_display = ['id','payment_proof', 'paymentMethod', 'statusPayment', 'quantity', 'totalPrice', 'discount',
+#                     'orderStatus','status','user_id','product_id','shop_id']
+#     search_fields = ['payment_proof', 'user_id',
+#                      'product_id']
+#     list_filter = ['paymentMethod', 'statusPayment', ]
+#     form=OrderForm
 
 
 class AppAdminSite(admin.AdminSite):

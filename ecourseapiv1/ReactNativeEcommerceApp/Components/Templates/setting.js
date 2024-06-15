@@ -8,16 +8,21 @@ import { useCart } from "./CartContext";
 import { useFocusEffect, useIsFocused } from '@react-navigation/native'
 import Logout from "../User/Logout";
 import { authAPI, endpoints } from "../../Configs/APIs";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getOrdersByStatus } from "../Utils/Utils";
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
 
-const Setting = ({navigation, route})=>{
-    const [user, dispatch] = useContext(MyContext);
+const Setting = ({navigation, route, previousScreen})=>{
+    console.info("route: " +JSON.stringify(route.params, null, 2))
+    const {user, dispatch} = useContext(MyContext);
     const { cartItems } = useCart();
-    const isFocused = useIsFocused ();
     const [numberOfWaitingConfirmationOrders, setNumberOfWaitingConfirmationOrders] = useState(0);
     const [numberOfShippingOrders, setNumberOfShippingOrders] = useState(0);
+    const { productId, updatedOrders  } = route.params || {};
+    const keyWaitingConfirmation = `waitingOrders_${user.username}_${user.id}`;
+    const keyShippingOrders = `shippingOrders_${user.username}_${user.id}`;
 
     //Menu
     const [showInfo, setShowInfo] = useState(false);
@@ -26,26 +31,57 @@ const Setting = ({navigation, route})=>{
     };
 
     useEffect(() => {
-        if (isFocused) {
-            loadUserOrders();
+        if (route.params && route.params.productId) {
+            const { productId, updatedOrders  } = route.params;
+            // Thực hiện các thao tác cần thiết với productId
         }
-    }, [isFocused]);
+    }, [route.params]);
 
-    const loadUserOrders = async () => {
-        try {
-            const res = await authAPI().get(endpoints["orders"]);
-            const waitingConfirmationOrders = res.data.filter(
-                (order) => order.status === "Chờ xác nhận"
-            );
-            const shippingOrders = res.data.filter(
-                (order) => order.status === "Chờ giao hàng"
-            );
-            setNumberOfWaitingConfirmationOrders(waitingConfirmationOrders.length);
-            setNumberOfShippingOrders(shippingOrders.length);
-        } catch (error) {
-            console.error("Lỗi khi tải đơn hàng của người dùng:", error.message);
+
+        
+    const loadOrders = async () => {
+        if (user) {
+            try {
+                const savedWaitingOrders = await AsyncStorage.getItem(keyWaitingConfirmation);
+                const savedShippingOrders = await AsyncStorage.getItem(keyShippingOrders);
+
+                let waitingOrders = [];
+                let shippingOrders = [];
+
+                if (savedWaitingOrders && savedWaitingOrders.length === 0) {
+                    waitingOrders = JSON.parse(savedWaitingOrders);
+                } else {
+                    waitingOrders = await getOrdersByStatus("Chờ xác nhận");
+                    if (waitingOrders && waitingOrders.length === 0) {
+                        await AsyncStorage.setItem(keyWaitingConfirmation, JSON.stringify(waitingOrders));
+                    }
+                }
+
+                if (savedShippingOrders && savedShippingOrders.length === 0) {
+                    shippingOrders = JSON.parse(savedShippingOrders);
+                } else {
+                    shippingOrders = await getOrdersByStatus("Chờ giao hàng");
+                    if (shippingOrders && shippingOrders.length === 0) {
+                        await AsyncStorage.setItem(keyShippingOrders, JSON.stringify(shippingOrders));
+                    }
+                }
+
+                const filteredWaitingOrders = waitingOrders.filter(order => order.user_id === user.id);
+                const filteredShippingOrders = shippingOrders.filter(order => order.user_id === user.id);
+
+                setNumberOfWaitingConfirmationOrders(waitingOrders.length);
+                setNumberOfShippingOrders(shippingOrders.length);
+            } catch (error) {
+                console.error('Lỗi khi tải đơn hàng từ bộ nhớ:', error);
+            }
         }
     };
+
+    useFocusEffect(
+        useCallback(()=>{
+            loadOrders();
+        },[user])
+    )
     
 
 
@@ -73,7 +109,7 @@ const Setting = ({navigation, route})=>{
                                 <Text style={{color: '#fff', fontSize: 12}}>{cartItems.length}</Text>
                                 </View>}
                             </TouchableOpacity>
-                            <TouchableOpacity>
+                            <TouchableOpacity onPress={()=>navigation.navigate("Chat")}>
                                 <Icon style={{fontSize: 25, color: '#fff', margin: 10}} name='comment'/>
                             </TouchableOpacity>
                         </View>          
@@ -93,13 +129,17 @@ const Setting = ({navigation, route})=>{
                             style={{alignItems: 'center', margin: 20}}>
                             <Icon style={{fontSize: 25, color: '#4D8D6E', textAlign: 'center'}} name="truck-fast"/>
                             <Text style={{marginTop: 10}}>Chờ giao hàng</Text>
-                            {numberOfShippingOrders  > 0 && <View style={{position: 'absolute', top: -8, right: 10, backgroundColor: '#4D8D6E', borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center'}}>
-                                <Text style={{color: '#fff', fontSize: 14}}>{numberOfShippingOrders }</Text>
+                            {numberOfShippingOrders > 0 && <View style={{position: 'absolute', top: -8, right: 10, backgroundColor: '#4D8D6E', borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center'}}>
+                                <Text style={{color: '#fff', fontSize: 14}}>{numberOfShippingOrders}</Text>
                                 </View>}
                         </TouchableOpacity>
-                        <TouchableOpacity style={{alignItems: 'center', margin: 20}}>
+                        <TouchableOpacity onPress={() => navigation.navigate("ReviewDetail", { productId: productId })}
+                            style={{alignItems: 'center', margin: 20}}>
                             <Icon style={{fontSize: 25, color: '#4D8D6E', textAlign: 'center' }} name="face-kiss-wink-heart"/>
                             <Text style={{marginTop: 10}}>Đánh giá</Text>
+                            {/* {notificationCount > 0 && <View style={{position: 'absolute', top: -8, right: 10, backgroundColor: '#4D8D6E', borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center'}}>
+                                <Text style={{color: '#fff', fontSize: 14}}>{notificationCount}</Text>
+                                </View>} */}
                         </TouchableOpacity>
                     </View>
                 </View>

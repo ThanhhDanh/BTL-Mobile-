@@ -104,8 +104,10 @@ import cloudinary
 cloudinary.config(
     cloud_name="dsyzahqsj",
     api_key="696835852437271",
-    api_secret="RZ_vLJDhgOkaNTEpQSNebIxd7SM"
+    api_secret="RZ_vLJDhgOkaNTEpQSNebIxd7SM",
 )
+
+# api_proxy= 'http://proxy.server:3128'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

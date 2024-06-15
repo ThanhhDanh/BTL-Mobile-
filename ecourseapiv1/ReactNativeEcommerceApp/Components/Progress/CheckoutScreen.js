@@ -1,10 +1,14 @@
-import { Alert, Button, Dimensions, Image, SafeAreaView, TouchableOpacity } from "react-native";
+import { Alert, Button, Dimensions, Image, Linking, SafeAreaView, TouchableOpacity } from "react-native";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import MyStyle from "../../Style/MyStyle";
 import { useContext, useEffect, useState } from "react";
 import APIs, { authAPI, endpoints } from "../../Configs/APIs";
 import MyContext from "../Templates/MyContext";
 import Icon from 'react-native-vector-icons/FontAwesome6';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { formatPrice } from "../Utils/Utils";
+import * as ImagePicker from 'expo-image-picker';
+import axios from "axios";
 
 const windowHeight = Dimensions.get('window').height;
 const windowWidth = Dimensions.get('window').width;
@@ -12,8 +16,7 @@ const windowWidth = Dimensions.get('window').width;
 export default CheckoutScreen = ({ route, navigation }) => {
     const { productDetail, selectedCartItems } = route.params;
     const products = productDetail ? [productDetail] : selectedCartItems;
-    const [user] = useContext(MyContext);
-    const [tag, setTag] = useState([]);
+    const {user} = useContext(MyContext);
     const [isListVisible, setIsListVisible] = useState(false);
     const [selectedTag, setSelectedTag] = useState(null);
     const [percentages, setPercentages] = useState(0);
@@ -22,20 +25,14 @@ export default CheckoutScreen = ({ route, navigation }) => {
     const [isPaymentListVisible, setIsPaymentListVisible] = useState(false);
     const [quantities, setQuantities] = useState(products.map(product => ({ id: product.id, quantity: 1 })));
     const [waitConfirmationOrders, setWaitConfirmationOrders] = useState([]);
+    const [waitShippingOrders, setWaitShippingnOrders] = useState([]);
+    const [selectedBill, setSelectedBill] = useState(null);
+    const [paymentProof, setPaymentProof] = useState(null);
+
 
     useEffect(() => {
-        loadTag();
         calculateTotalPrice();
     }, [products, percentages, quantities]);
-
-    const loadTag = async () => {
-        try {
-            let res = await APIs.get(endpoints['tags']);
-            setTag(res.data);
-        } catch (ex) {
-            console.info("Lỗi", ex.message);
-        }
-    }
 
     const calculateTotalPrice = () => {
         const total = products.reduce((sum, product) => {
@@ -46,18 +43,6 @@ export default CheckoutScreen = ({ route, navigation }) => {
         setTotalPrice(total - discount);
     };
 
-    const formatPrice = (price) => {
-        // Chuyển số thành chuỗi
-        const priceString = price.toString();
-        // Tạo mảng chứa các ký tự
-        const characters = priceString.split('');
-        // Chèn dấu chấm sau mỗi 3 số từ phía sau
-        for (let i = characters.length - 3; i > 0; i -= 3) {
-            characters.splice(i, 0, '.');
-        }
-        // Nối lại thành chuỗi và thêm '000 đ' ở cuối
-        return characters.join('') + '.000 đ';
-    };
 
     const [tagList, setTagList] = useState([
         { id: 1, name: 'Rẻ hơn các loại rẻ', percentage: 10 },
@@ -97,7 +82,7 @@ export default CheckoutScreen = ({ route, navigation }) => {
             <Image source={{ uri: item.image }} style={styles.productImage} />
             <View style={styles.productDetails}>
                 <Text style={styles.productName}>{item.name}</Text>
-                <Text style={styles.productPrice}>{item.priceProduct} đ</Text>
+                <Text style={styles.productPrice}>{formatPrice(item.priceProduct)}</Text>
                 <View style={styles.quantityContainer}>
                     <TouchableOpacity onPress={() => handleQuantityChange(item.id, Math.max(1, quantities.find(q => q.id === item.id).quantity - 1))}>
                         <Icon name="minus" size={25} />
@@ -116,65 +101,78 @@ export default CheckoutScreen = ({ route, navigation }) => {
             setIsPaymentListVisible(false);
     }
 
-    const saveToWaitConfirmation = async (orderId) => {
-        try {
-            setWaitConfirmationOrders([...waitConfirmationOrders, orderId]);
-        } catch (error) {
-            console.error('Lỗi khi thêm vào trang "Chờ xác nhận":', error.message);
+    // const saveOrder = async (orderId, key, stateSetter, state) => {
+    //     try {
+    //         const newOrders = [...state, orderId];
+    //         stateSetter(newOrders);
+    //         await AsyncStorage.setItem(key, JSON.stringify(newOrders));
+    //     } catch (error) {
+    //         console.error(`Lỗi khi thêm vào trang "${key}":`, error.message);
+    //     }
+    // };
+
+    // const saveToWaitConfirmation = async (orderId) => {
+    //     const key = `waitingOrders_${user.username}_${user.id}`;
+    //     await saveOrder(orderId, key, setWaitConfirmationOrders, waitConfirmationOrders);
+    // };
+
+    // const saveToWaitShipping = async (orderId) => {
+    //     const key = `shippingOrders_${user.username}_${user.id}`;
+    //     await saveOrder(orderId, key, setWaitShippingnOrders, waitShippingOrders);
+    // };
+
+
+    const handleChooseAvatar = async () => {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            alert("Permissions denied!");
+            return;
+        }
+    
+        const result = await ImagePicker.launchImageLibraryAsync();
+        if (!result.canceled) {
+            setPaymentProof(result);
         }
     };
         
     const handlePayment = async () => {
-        if (!selectedPaymentMethod) {
-            Alert.alert('Thông báo', 'Vui lòng chọn phương thức thanh toán!');
-            return;
-        }
-        try {
-            for (const product of products) {
-                const quantity = quantities.find(q => q.id === product.id).quantity;
-                const formData = new FormData();
-                formData.append('quantity', quantity);
-                formData.append('totalPrice', totalPrice);
-                formData.append('discount', percentages);
-                formData.append('paymentMethod', selectedPaymentMethod.name);  
-                formData.append('orderStatus', selectedPaymentMethod.name=== 'Thanh toán khi nhận hàng' ? 'Chưa thanh toán' : 'Đã thanh toán');
-                formData.append('status', selectedPaymentMethod.name === 'Thanh toán khi nhận hàng' ? 'Chờ xác nhận' : 'Chờ giao hàng');
-                formData.append('tags', selectedTag);
-                formData.append('product_id', product.id);
-                formData.append('user_id', user.id);
-                formData.append('created_date', new Date().toISOString());
-                formData.append('updated_date', new Date().toISOString());
-    
-                const res = await APIs.post(endpoints['orders'], formData, {
+        if (selectedPaymentMethod.key === "MOMO"){
+            // Xử lý thanh toán qua Momo
+            console.info(typeof productDetail.id);
+            console.info(typeof totalPrice);
+
+            const payload = {
+                id: productDetail.id.toString(),
+                price: totalPrice.toString(),
+            };
+
+            console.log(payload);
+            try {
+                const inforPay = await APIs.post(endpoints['momo'], payload, {
+                    withCredentials: true,
+                    crossdomain: true,
                     headers: {
-                        'Content-Type': 'multipart/form-data',
+                        'Content-Type': 'application/json',
                     },
                 });
-    
-                if (res.data && res.data.id) {
-                    // Nếu phương thức thanh toán là "Thanh toán khi nhận hàng", lưu hóa đơn vào trang "Chờ xác nhận"
-                    if (selectedPaymentMethod.name === 'Thanh toán khi nhận hàng') {
-                        await saveToWaitConfirmation(res.data.id);
-                    }
+                console.log("lấy url" + inforPay.data.payUrl);
+                const url = inforPay.data.payUrl;
+                if (url) {
+                    console.log("urllll " + url);
+                    // Mở URL trong trình duyệt
+                    Linking.openURL(url);
                 }
+            } catch (error) {
+                console.error('Error fetching URL:', error);
             }
-            Alert.alert('Thông báo', 'Thanh toán thành công!');
-            navigation.navigate('Setting', { numberOfOrders: waitConfirmationOrders.length });
-        } catch (ex) {
-            console.log('Lỗi thanh toán:', ex.message);
-        }
+
+            console.log('Thanh toán qua Momo');
+            // navigation.navigate('Momopay'); // Điều hướng đến màn hình thanh toán
+        } else (
+            console.info("Không phải")
+        )
     };
     
-    // console.info('quantity', quantity)
-    // console.info('totalPrice', totalPrice)
-    // console.info('discount', percentages)
-    // console.info('paymentMethod', selectedPaymentMethod.name)
-    // console.info('orderStatus')
-    // console.info('tags', selectedTag)
-    // console.info('product_id', product.id)
-    // console.info('user_id', user.id)
-    // console.info('created_date', new Date().toISOString())
-    // console.info('updated_date', new Date().toISOString())
     return (
         <SafeAreaView style={MyStyle.setForm}>
             <TouchableOpacity onPress={() => navigation.goBack()}
@@ -212,9 +210,8 @@ export default CheckoutScreen = ({ route, navigation }) => {
                         {isPaymentListVisible && (
                             <View style={[MyStyle.shadowMenuUser, { position: 'absolute', top: 20, right: 0, left: 0 }]}>
                                 {[
-                                    { id: 1, name: 'Thanh toán khi nhận hàng'},
-                                    { id: 2, name: 'Thẻ tín dụng / Thẻ ghi nợ' },
-                                    { id: 3, name: 'Ví điện tử ZaloPay' },
+                                    { id: 1, name: 'Thanh toán khi nhận hàng', key: 'COD' },
+                                    { id: 2, name: 'Ví điện tử Momo', key: 'MOMO' },
                                 ].map(method => (
                                     <TouchableOpacity style={{ margin: 5 }} key={method.id} onPress={() => handlePaymentMethodSelection(method)}>
                                         <Text style={{ fontSize: 16 }}>{method.name}</Text>
@@ -223,6 +220,14 @@ export default CheckoutScreen = ({ route, navigation }) => {
                             </View>
                         )}
                     </View>
+                    {/* {selectedPaymentMethod && selectedPaymentMethod.name === 'Ví điện tử Momo' && (
+                        <View style={styles.uploadProofContainer}>
+                            <TouchableOpacity onPress={handleChooseAvatar}>
+                                <Text>Tải ảnh chứng minh thanh toán</Text>
+                            </TouchableOpacity>
+                            {paymentProof && <Image source={{ uri: paymentProof.uri }} style={styles.proofImage} />}
+                        </View>
+                    )} */}
                 </View>
                 <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 70, flexDirection: 'row', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderTopWidth: 1, borderColor: '#ccc', justifyContent: 'space-around', alignItems: 'center' }}>
                     <View
@@ -319,5 +324,14 @@ const styles = StyleSheet.create({
     quantity: {
         fontSize: 18,
         fontWeight: 'bold'
+    },
+    uploadProofContainer: {
+        marginBottom: 20,
+        alignItems: 'center',
+    },
+    proofImage: {
+        width: 100,
+        height: 100,
+        marginTop: 10,
     },
 });

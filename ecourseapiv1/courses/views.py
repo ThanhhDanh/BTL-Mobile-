@@ -3,6 +3,7 @@ from rest_framework.authentication import BasicAuthentication, TokenAuthenticati
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
+from rest_framework.response import Response as ResponseRest
 from rest_framework.views import APIView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from courses import serializers, paginators, permission
@@ -17,9 +18,10 @@ from decimal import Decimal
 
 
 
-class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView):
+class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = Category.objects.filter(active=True)
     serializer_class = serializers.CategorySerializer
+
 
 
 class ShopViewSet(viewsets.ViewSet,generics.CreateAPIView, generics.ListAPIView, generics.RetrieveAPIView):
@@ -39,11 +41,6 @@ class ShopViewSet(viewsets.ViewSet,generics.CreateAPIView, generics.ListAPIView,
             q = self.request.query_params.get('q')
             if q:
                 queryset = queryset.filter(name__icontains=q)
-
-            product_name = self.request.query_params.get('p')
-            if product_name:
-                queryset = queryset.filter(product__name__icontains=product_name)
-
         return queryset
 
     @action(methods=['get'], url_path='products', detail=True)
@@ -75,6 +72,14 @@ class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAP
             q = self.request.query_params.get('q')
             if q:
                 queryset = queryset.filter(name__icontains=q)
+
+            gender = self.request.query_params.get('gender', None)
+            if gender:
+                queryset = queryset.filter(gender=gender)
+
+            shop_id = self.request.query_params.get('shop_id')
+            if shop_id:
+                queryset = queryset.filter(shop_id=shop_id)
 
         #lọc theo giá
         min_price = self.request.query_params.get('min_price')
@@ -163,13 +168,24 @@ class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAP
             like.save()
         return Response(serializers.ProductDetailsSerializer(self.get_object()).data)
 
+    @action(methods=['get'], url_path='reviews', detail=True)
+    def get_review(self, request, pk):
+        reviews = self.get_object().reviews_set.filter(active=True)
+        q = request.query_params.get('q')
+        if q:
+            # Lọc sản phẩm dựa trên tên sản phẩm và loại bỏ những sản phẩm không khớp
+            products = reviews.filter(id__icontains=q)
+
+        return Response(serializers.ReviewSerializer(reviews, many=True).data,
+                        status=status.HTTP_200_OK)
 
 
 
-class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIView): #PermissionRequiredMixin
+
+class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIView, PermissionRequiredMixin):
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
-    parser_classes = [parsers.MultiPartParser, ]
+    parser_classes = [parsers.MultiPartParser]
     # permission_classes = [permissions.IsAuthenticated]
 
     #Xác thực User
@@ -206,20 +222,79 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIVi
         return Response(serializers.UserSerializer(user).data)
 
 
-class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView,generics.ListAPIView):
+class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView,generics.ListAPIView, generics.CreateAPIView):
     queryset = Comment.objects.all()
     serializer_class = serializers.CommentSerializer
     permission_class = [permission.AccountOwnerAuthenticated]
 
 
+
 class ReviewViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.ListAPIView):
     queryset = Reviews.objects.all()
     serializer_class = serializers.ReviewSerializer
+    permission_class = [permission.AccountOwnerAuthenticated]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['created_date']
+    ordering = ['-created_date']  # Sắp xếp giảm dần theo created_date
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        if self.action.__eq__('list'):
+            q = self.request.query_params.get('q')
+            if q:
+                # Lọc theo product_id
+                queryset = queryset.filter(product_id=q)
+
+        return queryset
 
 
 class OrderViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView,generics.CreateAPIView,generics.UpdateAPIView, generics.DestroyAPIView):
     queryset = Orders.objects.all()
     serializer_class = serializers.OrderSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        if self.action in ['get_queryset', 'update_paid']:
+            return [permissions.IsAuthenticated()]
+
+        return [permissions.AllowAny()]
+
+    def get_queryset(self):
+        queryset = self.queryset
+
+        if self.action.__eq__('list'):
+            q = self.request.query_params.get('q')
+            if q:
+                queryset = queryset.filter(user_id=q)
+        return queryset
+
+    @action(detail=True, methods=['patch'], url_path='upload_proof', url_name='upload_proof')
+    def upload_proof(self, request, pk):
+        # user_id = request.user.id
+        fee_id = self.get_object()
+        print(fee_id)
+        avatar_file = request.data.get('', None)
+
+        try:
+            orderFee = get_object_or_404(Orders, id=fee_id)
+            new_avatar = cloudinary.uploader.upload(avatar_file)
+            orderFee.payment_proof = new_avatar['secure_url']
+            orderFee.statusPayment = True
+            orderFee.save()
+        except Orders.DoesNotExist:
+            return ResponseRest({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(methods=['patch'], detail=True, url_path='update-paid')
+    def update_paid(self, request, pk=None):
+        try:
+            orderFee = self.get_object()
+            orderFee.user_id = request.user.user_id
+            orderFee.statusPayment = True
+            orderFee.save()
+            return ResponseRest({'message': 'Receipt paid successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return ResponseRest(dict(error=e.__str__()), status=status.HTTP_400_BAD_REQUEST)
 
 
 class TagViewSet(viewsets.ViewSet, generics.ListAPIView,generics.CreateAPIView):
@@ -228,28 +303,108 @@ class TagViewSet(viewsets.ViewSet, generics.ListAPIView,generics.CreateAPIView):
 
 
 
-# class UserView(APIView):
-#     authentication_classes = [BasicAuthentication,
-#     TokenAuthentication]
-#     permission_classes = [IsAdminUser]
-#     def get(self, request):
-#         pass
-#
-# class UserAPIView(APIView, viewsets.ViewSet, generics.GenericAPIView):
-#
-#     def get_user(self, request):
-#         # Kiểm tra xem header Authorization có tồn tại không
-#         if 'HTTP_AUTHORIZATION' in request.META:
-#             auth_header = request.META['HTTP_AUTHORIZATION']
-#             # Kiểm tra xem header Authorization có chứa Bearer token không
-#             if auth_header.startswith('Bearer '):
-#                 access_token = auth_header.split(' ')[1]
-#                 # Thực hiện xác thực access_token ở đây
-#                 # Nếu access_token hợp lệ, tiếp tục xử lý yêu cầu
-#                 # Ví dụ: lấy đối tượng từ database và serialize nó
-#                 user = User.objects.filter(active=True)
-#                 serializer = serializers.UserSerializer(user)
-#                 return Response(serializer.data, status=status.HTTP_200_OK)
-#         # Nếu không có hoặc không hợp lệ, trả về lỗi 401 Unauthorized
-#         return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
 
+
+
+import hmac
+import hashlib
+import json
+import requests
+import uuid
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+
+# MOMO
+class MomoViewSet(viewsets.ViewSet):
+
+    @action(detail=False, methods=['post'], url_path='process', url_name='process_payment')
+    @csrf_exempt
+    def momo(self, request):
+        request_data = request.data
+        print(request_data)
+
+        endpoint = "https://test-payment.momo.vn/v2/gateway/api/create"
+        ipnUrl = "http://951f-171-243-49-117.ngrok-free.app/momo/momo_ipn/"
+
+        accessKey = "F8BBA842ECF85"
+        secretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz"
+        partnerCode = "MOMO"
+        orderInfo = request_data.get('id')
+        requestId = str(uuid.uuid4())
+        amount = request_data.get('price')
+        orderId = str(uuid.uuid4())
+        # orderId = total.get('appointment_id')+total.get('user_id')+total.get('booking_date')
+
+
+        print('orderInfo' + orderInfo )
+        print(type(orderInfo))
+        print('amount' + amount)
+        print(type(amount))
+
+        requestType = "captureWallet"
+        extraData = ""
+        redirectUrl = ""
+
+        rawSignature = "accessKey=" + accessKey + "&amount=" + amount + "&extraData=" + extraData + "&ipnUrl=" + ipnUrl \
+                       + "&orderId=" + orderId + "&orderInfo=" + orderInfo + "&partnerCode=" + partnerCode \
+                       + "&redirectUrl=" + redirectUrl + "&requestId=" + requestId + "&requestType=" + requestType
+
+        h = hmac.new(bytes(secretKey, 'ascii'), bytes(rawSignature, 'ascii'), hashlib.sha256)
+        signature = h.hexdigest()
+        data = {
+            'partnerCode': partnerCode,
+            'partnerName': "Test",
+            'storeId': "MomoTestStore",
+            'requestId': requestId,
+            'amount': amount,
+            'orderId': orderId,
+            'orderInfo': orderInfo,
+            'redirectUrl': redirectUrl,
+            'ipnUrl': ipnUrl,
+            'lang': "vi",
+            'extraData': extraData,
+            'requestType': requestType,
+            'signature': signature,
+            'orderExpireTime': 10,
+        }
+
+        data = json.dumps(data)
+
+        clen = len(data)
+        response = requests.post(endpoint,
+                                 data=data,
+                                 headers={'Content-Type': 'application/json', 'Content-Length': str(clen)})
+
+        print(response.status_code)
+        print(response.content)
+
+        if response.status_code == 200:
+            response_data = response.json()
+            return JsonResponse({**response_data})
+        else:
+            return JsonResponse({'error': 'Invalid request method'})
+
+    @action(detail=False, methods=['post'], url_path='momo_ipn')
+    @csrf_exempt
+    def momo_ipn(self, request):
+        if request.method == 'POST':
+            try:
+                ipn_data = request.data  # Sử dụng request.data thay vì json.loads(request.data)
+                order_info = ipn_data.get('orderInfo')
+                result_code = ipn_data.get('resultCode')
+
+                if result_code == 0:
+                    try:
+                        order_fee = Orders.objects.get(id=order_info)
+                        order_fee.status = order_fee.EnumStatusFee.DONE
+                        order_fee.save()
+                        return JsonResponse({'message': 'Payment successful and status updated'}, status=200)
+                    except Orders.DoesNotExist:
+                        return JsonResponse({'error': 'Order not found'}, status=404)
+                else:
+                    return JsonResponse({'error': 'Payment failed'}, status=400)
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        else:
+            return JsonResponse({'error': 'Invalid request method'}, status=405)

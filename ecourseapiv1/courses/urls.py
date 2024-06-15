@@ -16,6 +16,7 @@ r.register('shops', views.ShopViewSet, basename='shops')
 r.register('orders', views.OrderViewSet, basename='orders')
 r.register('reviews', views.ReviewViewSet, basename='reviews')
 r.register('tags', views.TagViewSet, basename='tags')
+r.register('momo', views.MomoViewSet, basename='momo')
 
 
 urlpatterns = [
