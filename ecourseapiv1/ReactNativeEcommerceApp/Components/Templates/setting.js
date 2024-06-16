@@ -14,7 +14,7 @@ const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
 
-const Setting = ({navigation, route, previousScreen})=>{
+const Setting = ({navigation, route})=>{
     console.info("route: " +JSON.stringify(route.params, null, 2))
     const {user, dispatch} = useContext(MyContext);
     const { cartItems } = useCart();
@@ -109,7 +109,7 @@ const Setting = ({navigation, route, previousScreen})=>{
                                 <Text style={{color: '#fff', fontSize: 12}}>{cartItems.length}</Text>
                                 </View>}
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={()=>navigation.navigate("Chat")}>
+                            <TouchableOpacity onPress={()=>navigation.navigate("ChatList",{previousScreen: 'Setting'})}>
                                 <Icon style={{fontSize: 25, color: '#fff', margin: 10}} name='comment'/>
                             </TouchableOpacity>
                         </View>          
@@ -144,6 +144,12 @@ const Setting = ({navigation, route, previousScreen})=>{
                     </View>
                 </View>
                 <View style={{width: '100%', height: '25%'}}>
+                    <TouchableOpacity onPress={() => navigation.navigate("CreateShop")}>
+                        <View style={{flexDirection: 'row', alignItems: 'center', marginLeft: 20, marginBottom: 20}}>
+                            <Icon style={{fontSize: 30 , color: '#4D8D6E'}} name="shop"/>
+                            <Text style={{marginLeft: 10, fontSize: 18}}>Tiếp thị liên kết</Text>
+                        </View>
+                    </TouchableOpacity>
                     <TouchableOpacity onPress={toggleInfo}>
                         <View style={{flexDirection: 'row', alignItems: 'center', marginLeft: 20}}>
                             <Icon style={{fontSize: 30 , color: '#4D8D6E'}} name="id-card"/>

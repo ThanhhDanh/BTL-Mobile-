@@ -183,16 +183,6 @@
                                 onScroll={loadMore}>
                                 <RefreshControl onRefresh={() => loadShopsAndProduct()} />
                                 <View> 
-                                    {/* {loading && <ActivityIndicator/>}
-                                    {shops.map(c=> 
-                                    <TouchableOpacity key={c.id} onPress={()=>handleShopSelect(c.id)}>
-                                        <List.Item style={{width: windowWidth - 60, margin: 5}} title={c.name} 
-                                        description={c.address}
-                                        left={() => <Image style={MyStyle.img} source={{ uri: c.image }} />}
-                                    />
-                                    </TouchableOpacity>
-                                    )}
-                                    {loading && page > 1 && <ActivityIndicator />} */}
                                     {loading && <ActivityIndicator />}
                                     {shops.length > 0 && (
                                         <>
@@ -243,8 +233,11 @@
                                         </View>
                                         <Text style={{marginTop: 5}} >Thời trang</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={{width: 100, height: 100, alignItems: 'center'}}>
-                                        <Image style={{width: 50, height: 50}} resizeMode="cover" source={{uri: 'https://snack-web-player.s3.us-west-1.amazonaws.com/v2/51/assets/src/react-native-logo.2e38e3ef2dc9c7aafd21c14df3a1cdb8.png'}}/>
+                                    <TouchableOpacity onPress={() =>handleShopByNameSelect(5)}
+                                        style={{width: 100, height: 100, alignItems: 'center'}}>
+                                        <View style={{height: 50, width: 50, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#ccc', borderRadius: 10}}>
+                                            <Icon style={{fontSize: 30, color: 'rgb(233,71,139)'}} name="clock"/>
+                                        </View>
                                         <Text style={{marginTop: 5}}>Đồng hồ</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={{width: 100, height: 100, alignItems: 'center'}}>
@@ -292,10 +285,6 @@
                                     <Text style={{color:'#fff', fontSize: 30, textAlign: 'center'}}>Danh mục</Text>
                                     <ScrollView>
                                         <View style={{margin: 10}}>
-                                                {/* <TouchableOpacity style={MyStyle.cateItem}>
-                                                    <Icon style={{color: "#121139", fontSize: 18,marginRight: 10}} name="store"/>
-                                                    <Text style={{color: '#fff', fontSize: 18}}>Tất cả</Text>
-                                                </TouchableOpacity> */}
                                             {
                                                 categories ===null?<ActivityIndicator/>:<>
                                                 {categories.map(c=>
@@ -332,10 +321,6 @@
                             <TouchableOpacity onPress={show}>
                                 <Icon style={{ fontSize: 30, color: '#fff', margin: 10, marginLeft: 30 }} name="bars" />
                             </TouchableOpacity>
-                            {/* <Text style={{ fontSize: 30, color: '#fff'}}>Bamboo</Text> */}
-                            {/* <TouchableOpacity>
-                                <Icon style={{ fontSize: 25, color: '#fff',margin: 10 }} name="bell" />
-                            </TouchableOpacity> */}
                         </View>
                 </View> 
             </SafeAreaView>

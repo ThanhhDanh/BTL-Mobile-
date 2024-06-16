@@ -80,7 +80,7 @@ const BodyLogin = ({navigation})=>{
     const [visible, setVisible] = useState(false);
     const [username, setUsername] = useState();
     const [password, setPassword] = useState();
-    const {dispatch, setIsAuthenticated, setRole}= useContext(MyContext);
+    const {dispatch, setIsAuthenticated, setRole, role, user}= useContext(MyContext);
     const { setCartItems, setShippingOrders, setWaitingOrders  } = useCart()
     
     const formLogin = async () =>{
@@ -104,6 +104,8 @@ const BodyLogin = ({navigation})=>{
 
             let userRes = await authAPI(res.data.access_token).get(endpoints['current-user']);
             if (userRes && userRes.data) {
+                let userRole = userRes.data.role;
+                setRole(userRole)
                 dispatch({
                     "type": "login",
                     "payload": userRes.data
@@ -112,6 +114,7 @@ const BodyLogin = ({navigation})=>{
                 setIsAuthenticated(true);
     
                 console.log('userRes: ' + JSON.stringify(userRes.data,null,2));
+                console.log('userRole: ' + role)
     
                 const userData = userRes.data;
     
@@ -234,6 +237,7 @@ const FormRegister = ({ page, setPage,isRegister,setIsRegister, navigation}) => 
         "username": "",
         "password": "",
         "avatar": " ",
+        "role": 'user'
     });
 
 
@@ -336,7 +340,8 @@ const FormRegister = ({ page, setPage,isRegister,setIsRegister, navigation}) => 
             "address": "",
             "username": "",
             "password": "",
-            "avatar": ""
+            "avatar": "",
+            "role": "",
         });
         setIsRegister(false); // Cập nhật lại giá trị isRegister để hiển thị lại phần đăng ký
         setPage(REGITSTER); // Di chuyển đến trang đăng ký

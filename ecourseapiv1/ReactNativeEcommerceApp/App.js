@@ -34,6 +34,9 @@ import CompareScreen from './Components/Templates/CompareScreen';
 import ShopItemByName from './Components/Shop/ShopItem';
 import { onAuthStateChanged } from 'firebase/auth';
 import Chat from './Components/Chat/Chat';
+import ChatList from './Components/Chat/ChatList';
+import CreateShop from './Components/Shop/CreateShop';
+import AddProduct from './Components/Product/AddProduct';
 
 
 
@@ -42,42 +45,6 @@ const Stack = createNativeStackNavigator();
 
 const MyStack = () => {
   const {user, dispatch, isAuthenticated, setIsAuthenticated, role, setRole} = useContext(MyContext);
-
-  const getAccessToken = async () => {
-    try {
-      const token = await AsyncStorage.getItem('refresh-token');
-      if (token !== null) {
-        console.log('Token:', token);
-        let userRes = await APIs.post(endpoints['login'],{
-            'refresh_token': token,
-            'client_id': "hGTgI136AQk94I8JuY4mkFKesDaFyohdf0Wm1rd4",
-            'client_secret': "pagQY5E46yJDmmXXDzA1JdS9yd09aThE1otII6olTvvbBf1XG4mazubgPpZQHCOSJqZzR72xv7OoDPp4aT72pT9D9DbtS2diDYrnG9ZNZxIV94O4XigOIIx8zY2jOoYn",
-            "grant_type": "refresh_token"
-        },
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
-        await AsyncStorage.setItem('access-token', res.data.access_token)
-        await AsyncStorage.setItem('refresh-token', res.data.refresh_token)
-        let user = await authAPI(res.data.access_token).get(endpoints['current-user']);
-        dispatch({
-          "type": "login",
-          "payload": user.data
-        });
-      } else {
-        console.log('Không tìm thấy token trong AsyncStorage');
-      }
-    } catch (ex) {
-      console.log("Lỗi app: " + ex.message);
-    }
-  };
-
-  useEffect(() => {
-    getAccessToken();
-  }, []);
 
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
@@ -130,13 +97,13 @@ function MyTabs() {
       <Tab.Screen name="CompareScreen" component={CompareScreen} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
       <Tab.Screen name="ShopItemByName" component={ShopItemByName} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
       <Tab.Screen name="Chat" component={Chat} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="CreateShop" component={CreateShop} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="AddProduct" component={AddProduct} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} /><Tab.Screen name="ChatList" component={ChatList} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
     </Tab.Navigator>
   );
 }
 
 export default function App() {
-
-  // const [user, dispatch] = useReducer(MyUserReducer, null);
   const [user, dispatch] = useReducer(MyUserReducer, null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [role, setRole] = useState();
@@ -145,28 +112,17 @@ export default function App() {
   useEffect(() => {
     const getAccessToken = async () => {
       try {
-        const token = await AsyncStorage.getItem('refresh-token');
+        const token = await AsyncStorage.getItem('access-token');
         if (token !== null) {
           console.log('Token:', token);
-          let userRes = await APIs.post(endpoints['login'],{
-              'refresh_token': token,
-              'client_id': "hGTgI136AQk94I8JuY4mkFKesDaFyohdf0Wm1rd4",
-              'client_secret': "pagQY5E46yJDmmXXDzA1JdS9yd09aThE1otII6olTvvbBf1XG4mazubgPpZQHCOSJqZzR72xv7OoDPp4aT72pT9D9DbtS2diDYrnG9ZNZxIV94O4XigOIIx8zY2jOoYn",
-              "grant_type": "refresh_token"
-          },
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        );
-          await AsyncStorage.setItem('access-token', res.data.access_token)
-          await AsyncStorage.setItem('refresh-token', res.data.refresh_token)
-          let user = await authAPI(res.data.access_token).get(endpoints['current-user']);
+          let user = await authAPI(token).get(endpoints['current-user']);
+          console.log(user.data);
           dispatch({
             "type": "login",
             "payload": user.data
           });
+          setIsAuthenticated(true);
+          setRole(user.data.role);
         } else {
           console.log('Không tìm thấy token trong AsyncStorage');
         }

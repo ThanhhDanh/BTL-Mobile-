@@ -8,7 +8,7 @@ import PropTypes from 'prop-types';
 import { useCart } from './CartContext';
 
 const CompareScreen = ({ route, navigation }) => {
-  const { selectedProducts: selectedProductsFromRoute, cate, onProductRemovedFromComparison } = route.params;
+    const { selectedProducts: selectedProductsFromRoute, cate, onProductRemovedFromComparison, shopId } = route.params;
   const [previousScreen, setPreviousScreen] = useState(null);
   const [productRatings, setProductRatings] = useState({});
   const [productSales, setProductSales] = useState({});
@@ -16,20 +16,15 @@ const CompareScreen = ({ route, navigation }) => {
   const { addSelectedProduct, removeSelectedProduct } = useCart();
   const [selectedProducts, setSelectedProducts] = useState(selectedProductsFromRoute);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (route.params && route.params.previousScreen) {
-        setPreviousScreen(route.params.previousScreen);
-      }
-    }, [route])
-  );
+  useEffect(() => {
+    setSelectedProducts(selectedProductsFromRoute);
+  }, [selectedProductsFromRoute]);
 
   // Kiểm tra số lượng sản phẩm đã chọn khi màn hình được focus
   useFocusEffect(
     useCallback(() => {
-      if (route.params && route.params.selectedProductsFromRoute) {
-        const selectedProductsFromRoute = route.params.selectedProductsFromRoute;
-        setSelectedProducts(selectedProductsFromRoute);
+      if (route.params && route.params.previousScreen) {
+        setPreviousScreen(route.params.previousScreen);
       }
     }, [route])
   );
@@ -39,16 +34,14 @@ const CompareScreen = ({ route, navigation }) => {
     // Đếm số lượng đánh giá cho từng sản phẩm
     const reviewsCount = {};
     selectedProductsFromRoute.forEach(product => {
-      if (betterProduct && betterProduct.id === product.id) {
-        reviewsCount[product.id] = product.reviews.length;
-      }
+      reviewsCount[product.id] = product.reviews.length;
     });
     setProductReviews(reviewsCount);
-  }, [selectedProductsFromRoute, betterProduct]);
+  }, [selectedProductsFromRoute]);
 
   const handleGoBack = () => {
     if (previousScreen) {
-      navigation.navigate(previousScreen, { selectedProductsFromRoute });
+      navigation.navigate(previousScreen, { selectedProductsFromRoute: selectedProductsFromRoute, shopId});
     } else {
       navigation.goBack();
     }
@@ -69,16 +62,20 @@ const CompareScreen = ({ route, navigation }) => {
   };
 
   const handleRemoveProduct = (productId) => {
-    removeSelectedProduct(productId);  
-    const newSelectedProducts = selectedProductsFromRoute.filter(product => product.id !== productId);
+    removeSelectedProduct(productId); // Xóa sản phẩm trong giỏ hàng hoặc logic của bạn
+    const newSelectedProducts = selectedProducts.filter(product => product.id !== productId);
     setSelectedProducts(newSelectedProducts);
-    // Cập nhật lại selectedProductsFromRoute
-    route.params.selectedProducts = newSelectedProducts;
-    console.log("selected products: ", JSON.stringify(newSelectedProducts));
+
+    // Cập nhật lại tham số trong route.params
+    navigation.setParams({
+      ...route.params,
+      selectedProducts: newSelectedProducts,
+      selectedProductsFromRoute: newSelectedProducts,
+    });
 
     // Gọi hàm callback để thông báo rằng sản phẩm đã được xóa khỏi danh sách so sánh
     if (onProductRemovedFromComparison) {
-        onProductRemovedFromComparison(productId);
+      onProductRemovedFromComparison(productId);
     }
   };
 
@@ -205,7 +202,7 @@ const styles = StyleSheet.create({
     height: 40,
     zIndex: 1,
     position: 'absolute',
-    top: 25,
+    top: 40,
     left: 15,
     alignItems: 'center',
     justifyContent: 'center',
@@ -326,7 +323,7 @@ const styles = StyleSheet.create({
     height: 40,
     zIndex: 1,
     position: 'absolute',
-    top: 25,
+    top: 40,
     right: 15,
     alignItems: 'center',
     justifyContent: 'center',

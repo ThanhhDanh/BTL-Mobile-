@@ -17,7 +17,7 @@ const windowHeight = Dimensions.get('window').height;
 const CategoryDetails = ({navigation, route, previousScreen}) => {
   console.info("route: " +JSON.stringify(route.params, null, 2))
   const {user, dispatch} = useContext(MyContext);
-    const { cartItems, addSelectedProduct } = useCart();
+  const { cartItems, addSelectedProduct } = useCart();
   const { categoryId} = route.params || {};
   const [shops, setShops] = useState([]);
   const [cate, setCate] = useState('');
@@ -39,15 +39,20 @@ const CategoryDetails = ({navigation, route, previousScreen}) => {
     }
   };
 
+  useEffect(() => {
+    if (route.params.selectedProductsFromRoute) {
+      setSelectedProducts(route.params.selectedProductsFromRoute);
+    }
+  }, [route.params]);
+
 
   useEffect(() => {
     if (route.params && route.params.categoryId) {
-        const { categoryId  } = route.params;
-        setSelectedShopId(null);
-        loadShopsByCategory(categoryId);
-        // Thực hiện các thao tác cần thiết với productId
+      const { categoryId } = route.params;
+      setSelectedShopId(null);
+      loadShopsByCategory(categoryId);
     }
-}, [route]);
+  }, [route]);
 
   const loadShopsByCategory = async (categoryId) => {
     try {
@@ -62,22 +67,25 @@ const CategoryDetails = ({navigation, route, previousScreen}) => {
     }
   };
 
+  
+  const handleProductRemovedFromComparison = (productId) => {
+    const newSelectedProducts = selectedProducts.filter(product => product.id !== productId);
+    setSelectedProducts(newSelectedProducts);
+  };
+  
   useEffect(() => {
     if (categoryId) {
       loadShopsByCategory(categoryId);
   }
   }, [categoryId]);
 
-  const handleProductRemovedFromComparison = (productId) => {
-    // Cập nhật trạng thái của sản phẩm sau khi xóa khỏi danh sách so sánh
-    const newSelectedProducts = selectedProducts.filter(product => product.id !== productId);
-    setSelectedProducts(newSelectedProducts);
-};
-
-  const handleSelectProduct = (product) => {
-    addSelectedProduct(product);
-    // Điều hướng đến màn hình CompareScreen
-    navigation.navigate('CompareScreen',{ selectedProducts, previousScreen: 'CategoryDetail',cate,  onProductRemovedFromComparison: handleProductRemovedFromComparison(product.id)});
+  const handleSelectProduct = () => {
+    navigation.navigate('CompareScreen', {
+      selectedProducts,
+      previousScreen: 'CategoryDetail',
+      cate,
+      onProductRemovedFromComparison: handleProductRemovedFromComparison
+    });
   };
 
   
@@ -164,17 +172,9 @@ const CategoryDetails = ({navigation, route, previousScreen}) => {
 
     allProducts.sort((a, b) => {
       if (sortBy === 'name') {
-        if (sortOrder === 'asc') {
-          return a.name.localeCompare(b.name);
-        } else {
-          return b.name.localeCompare(a.name);
-        }
+        return sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
       } else if (sortBy === 'price') {
-        if (sortOrder === 'asc') {
-          return a.priceProduct - b.priceProduct;
-        } else {
-          return b.priceProduct - a.priceProduct;
-        }
+        return sortOrder === 'asc' ? a.priceProduct - b.priceProduct : b.priceProduct - a.priceProduct;
       }
     });
 
@@ -261,14 +261,8 @@ const CategoryDetails = ({navigation, route, previousScreen}) => {
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
           <>
-              <View>
                 {renderShopNames()}
-              </View>
-              <View style={{flex: 1}}>
-                <View style={{borderWidth: 1, alignItems: 'center', height: windowHeight - 250}}>
-                  {renderProducts()}
-                </View>
-              </View>
+                {renderProducts()}
           </>
         )}
       </View>
@@ -321,8 +315,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     backgroundColor: '#f9f9f9',
     margin: 5,
-    maxWidth: '29%', // Set maximum width for each item
-    width: 120,
+    maxWidth: '35%', // Set maximum width for each item
+    width: 132,
     minHeight: 210,
   },
   productImage: {

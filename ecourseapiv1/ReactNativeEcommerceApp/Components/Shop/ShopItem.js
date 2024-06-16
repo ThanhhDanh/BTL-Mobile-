@@ -27,8 +27,9 @@ const ShopItemByName = ({navigation, route, previousScreen}) => {
   const [showSortOptions, setShowSortOptions] = useState(false); // State to control the visibility of sort options
   const [genders, setGenders] = useState(['male', 'female', 'unisex']);
   const [selectedGender, setSelectedGender] = useState(null);
+  const [selectedProducts, setSelectedProducts] = useState([]);
 
-  const scrollViewHeight = shops.length * 210;
+  const scrollViewHeight = shops.length * 200;
 
   useEffect(() => {
     if (route.params && route.params.shopId) {
@@ -61,6 +62,7 @@ const ShopItemByName = ({navigation, route, previousScreen}) => {
            };
        });
        setShops(productsWithCategoryName)
+       productsWithCategoryName.forEach( p => setCate(p.categoryName))
     } catch (ex) {
       console.error("Lỗi shop item " + ex.message);
     } finally {
@@ -120,15 +122,52 @@ const handleSort = (criteria) => {
   setShowSortOptions(false);
 };
 
+const toggleProductSelection = (shop) => {
+  if (selectedProducts.includes(shop) && selectedProducts.length <= 2) {
+    setSelectedProducts(selectedProducts.filter(p => p !== shop));
+  } else if (selectedProducts.length < 2) {
+    setSelectedProducts([...selectedProducts, shop]);
+  } else {
+    // Nếu đã chọn đủ 2 sản phẩm, hiển thị thông báo
+    Alert.alert("Thông báo", "Bạn chỉ có thể chọn tối đa 2 sản phẩm.");
+  }
+};
 
-const renderShopNames = () => {
+useEffect(() => {
+  if (route.params.selectedProductsFromRoute) {
+    setSelectedProducts(route.params.selectedProductsFromRoute);
+  }
+}, [route.params]);
+
+const handleProductRemovedFromComparison = (productId) => {
+  const newSelectedProducts = selectedProducts.filter(product => product.id !== productId);
+  setSelectedProducts(newSelectedProducts);
+};
+
+
+const handleSelectProduct = () => {
+  navigation.navigate('CompareScreen', {
+    selectedProducts,
+    previousScreen: 'ShopItemByName',
+    cate,
+    onProductRemovedFromComparison: handleProductRemovedFromComparison,
+    shopId
+  });
+};
+
+
+const renderSelectNames = () => {
   return (
     <View>
       <TouchableOpacity onPress={() => setShowSortOptions(!showSortOptions)}
         style={{ position: 'absolute', left: 0, zIndex: 100, bottom: 0, height: '100%', alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1 }}>
         <Text style={[styles.shopNameText, { marginLeft: 5 }]}>Sắp xếp</Text>
       </TouchableOpacity>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: 60 }}>
+      <TouchableOpacity onPress={handleSelectProduct}
+            style={{position: 'absolute', right: 0, zIndex: 100, bottom: 0, height: '100%', alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, }}>
+            <Text style={[styles.shopNameText,{marginLeft: 5}]}>So sánh</Text>
+          </TouchableOpacity>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: 60, marginRight: 60}}>
         <View style={styles.shopNamesContainer}>
           <TouchableOpacity
             style={[styles.shopName, selectedGender === null && styles.selectedShop]}
@@ -147,7 +186,8 @@ const renderShopNames = () => {
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                 {selectedGender === gender && <Icon style={{ marginRight: 10, color: 'rgb(233,71,139)', shadowOpacity: 1 }} name='check' />}
-                <Text style={styles.shopNameText}>{gender === 'male' ? 'Thời trang nam' : gender === 'female' ? 'Thời trang nữ' : 'Unisex'}</Text>
+                {shopId == 2 && <Text style={styles.shopNameText}>{gender === 'male' ? 'Thời trang nam' : gender === 'female' ? 'Thời trang nữ' : 'Unisex'}</Text>}
+                {shopId == 5 && <Text style={styles.shopNameText}>{gender === 'male' ? 'Đồng hồ nam' : gender === 'female' ? 'Đồng hồ nữ' : ''}</Text>}
               </View>
             </TouchableOpacity>
           ))}
@@ -192,6 +232,8 @@ const renderProducts = () => {
     return `${text.substring(0, limit)}...`;
   };
 
+  
+
   return (
     <FlatList
       data={sortedProducts}
@@ -206,6 +248,10 @@ const renderProducts = () => {
           onPress={() => navigation.navigate("ProductDetails", { productId: shop.id, previousScreen: "ShopItemByName", shopId })}
           showsVerticalScrollIndicator={false}
         >
+          <TouchableOpacity style={{position: 'absolute',right: 2, top: 0, zIndex: 1}}
+              onPress={() => toggleProductSelection(shop)}>
+              <Icon name={selectedProducts.includes(shop) ? 'check-square' : 'square'} size={18} color="rgb(233,71,139)" />
+          </TouchableOpacity>
           <View style={{ position: 'absolute', top: 0, left: 0, backgroundColor: 'rgb(233,71,139)', zIndex: 1, width: 35, height: 25, borderBottomRightRadius: 10, borderTopLeftRadius: 5 }}>
             <Text style={{ fontSize: 9, textAlign: 'center', fontWeight: '500', color: '#fff' }}>{shop.categoryName}</Text>
           </View>
@@ -253,16 +299,14 @@ const renderProducts = () => {
             </View>
         </View>
       <View style={styles.container}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
-        ) : (
-          <>
-            {renderShopNames()}
-            <View style={{alignItems: 'center', flex:1}}>
-              {renderProducts()}
-            </View>
-          </>
-        )}
+          {loading ? (
+            <ActivityIndicator size="large" color="#0000ff" />
+          ) : (
+            <>
+                {renderSelectNames()}
+                {renderProducts()}
+            </>
+          )}
       </View>
     </View>
   );
@@ -313,8 +357,8 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     backgroundColor: '#f9f9f9',
     margin: 5,
-    maxWidth: '29%', // Set maximum width for each item
-    width: 120,
+    maxWidth: '35%', // Set maximum width for each item
+    width: 132,
     minHeight: 210,
   },
   productImage: {

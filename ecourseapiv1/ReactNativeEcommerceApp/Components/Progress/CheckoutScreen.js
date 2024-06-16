@@ -29,6 +29,7 @@ export default CheckoutScreen = ({ route, navigation }) => {
     const [selectedBill, setSelectedBill] = useState(null);
     const [paymentProof, setPaymentProof] = useState(null);
 
+    
 
     useEffect(() => {
         calculateTotalPrice();
@@ -45,16 +46,16 @@ export default CheckoutScreen = ({ route, navigation }) => {
 
 
     const [tagList, setTagList] = useState([
-        { id: 1, name: 'Rẻ hơn các loại rẻ', percentage: 10 },
-        { id: 2, name: 'Dùng thử miễn phí 7 ngày', percentage: 20 },
-        { id: 3, name: 'HSSV giảm thêm 500K', percentage: 30 },
-        { id: 4, name: 'Tặng thêm 5 ưu đãi khác', percentage: 40 },
+        { id: 1, name: 'Rẻ hơn các loại rẻ', percentage: 80 },
+        { id: 2, name: 'Dùng thử miễn phí 7 ngày', percentage: 70 },
+        { id: 3, name: 'HSSV giảm thêm 500K', percentage: 80 },
+        { id: 4, name: 'Tặng thêm 5 ưu đãi khác', percentage: 50 },
         { id: 5, name: 'Thu cũ đổi mới đến 2 triệu', percentage: 50 },
-        { id: 6, name: 'Tặng thêm 2 triệu khi lên đời', percentage: 30 },
-        { id: 7, name: 'Trả góp 0%', percentage: 20 },
-        { id: 8, name: 'Giảm sập sàn', percentage: 10 },
-        { id: 9, name: 'Voucher free ship', percentage: 40 },
-        { id: 10, name: 'Voucher 50%', percentage: 50 },
+        { id: 6, name: 'Tặng thêm 2 triệu khi lên đời', percentage: 90 },
+        { id: 7, name: 'Trả góp 0%', percentage: 60 },
+        { id: 8, name: 'Giảm sập sàn', percentage: 70 },
+        { id: 9, name: 'Voucher free ship', percentage: 85 },
+        { id: 10, name: 'Voucher 50%', percentage: 95 },
     ]);
     
     const handleTagSelection = (tagId) => {
@@ -138,13 +139,24 @@ export default CheckoutScreen = ({ route, navigation }) => {
     const handlePayment = async () => {
         if (selectedPaymentMethod.key === "MOMO"){
             // Xử lý thanh toán qua Momo
+            
+            if (productDetail) {
+                const payload = {
+                    id: productDetail.id.toString(),
+                    price: totalPrice.toString(),
+                };
+            }
+
+            if (selectedCartItems) {
+                selectedCartItems.forEach( item => {
+                    const payload = {
+                        id: item.id.toString(),
+                        price: totalPrice.toString(),
+                    };
+                })
+            }
             console.info(typeof productDetail.id);
             console.info(typeof totalPrice);
-
-            const payload = {
-                id: productDetail.id.toString(),
-                price: totalPrice.toString(),
-            };
 
             console.log(payload);
             try {

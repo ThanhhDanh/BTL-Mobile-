@@ -33,6 +33,8 @@ const ProductDetails = ({ route, navigation}) => {
     const {user} = useContext(MyContext);
     const [previousScreen, setPreviousScreen] = useState(null);
 
+    // console.info(productDetail)
+
     const loadProductDetail = async () => {
         try {
             let res = await APIs.get(endpoints['product-details'](productId));
@@ -128,7 +130,7 @@ const ProductDetails = ({ route, navigation}) => {
         // console.info(categoryId)
         // console.info(productDetail.category_id)
         if (previousScreen) {
-            navigation.navigate(previousScreen,{ categoryId: categoryId, shopId:shopId});
+            navigation.navigate(previousScreen,{ categoryId: categoryId, shopId:shopId, productId: productId});
         } else {
             navigation.goBack();
         }
@@ -162,12 +164,18 @@ const ProductDetails = ({ route, navigation}) => {
     return (
             <View style={{width: '100%', height: '100%'}}>
                  <TouchableOpacity onPress={handleGoBack}
-                            style={{width: 40, height: 40,zIndex: 1, position: 'absolute',top: 20, left: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
-                            <Icon style={{fontSize: 15, color: '#fff'}} name="chevron-left"/>
+                            style={{width: 40, height: 40,zIndex: 1, position: 'absolute',top: 40, left: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
+                            <Icon style={{fontSize: 20, color: '#fff'}} name="chevron-left"/>
                 </TouchableOpacity>
+                {user && <TouchableOpacity onPress={() => navigation.navigate("Chat",{previousScreen: "ProductDetails",
+                    categoryId: categoryId, productId: productId, selectedUser: user
+                })}
+                    style={{width: 40, height: 40,zIndex: 1, position: 'absolute',top: 40, right: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
+                    <Icon style={{fontSize: 20, color: '#fff'}} name="comment"/>
+                </TouchableOpacity>}
                 {user && <TouchableOpacity onPress={() =>navigation.navigate('Cart', {'productDetail': productDetail },{ previousScreen: 'ProductDetail' })}
-                            style={{width: 40, height: 40,zIndex: 1, position: 'absolute',top:20, right: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
-                            <Icon style={{fontSize: 15, color: '#fff'}} name="cart-shopping"/>
+                            style={{width: 40, height: 40,zIndex: 1, position: 'absolute',top:20, right: 90, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
+                            <Icon style={{fontSize: 20, color: '#fff'}} name="cart-shopping"/>
                             {cartItems.length > 0 && <View style={{position: 'absolute', top: -5, right: -5, backgroundColor: 'red', borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center'}}>
                                 <Text style={{color: '#fff', fontSize: 12}}>{cartItems.length}</Text>
                             </View>}
