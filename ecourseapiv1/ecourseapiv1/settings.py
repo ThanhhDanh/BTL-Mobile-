@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     # 'rest_framework.authtoken',
     'oauth2_provider',
     'django_filters',
-    'bootstrap5'
+    'bootstrap5',
+    # 'corsheaders',
 ]
 
 CKEDITOR_UPLOAD_PATH = "ckeditors/images/"
@@ -64,7 +65,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'corsheaders.middleware.CorsMiddleware',
 ]
+
+# CORS_ALLOW_ALL_ORIGINS = False
 
 ROOT_URLCONF = 'ecourseapiv1.urls'
 

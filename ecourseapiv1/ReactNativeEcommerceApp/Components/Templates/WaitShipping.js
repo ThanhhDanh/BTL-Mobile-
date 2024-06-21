@@ -5,7 +5,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { authAPI, endpoints } from "../../Configs/APIs";
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import moment from 'moment';
-import { getOrdersByStatus } from "../Utils/Utils";
+import { formatPrice, getOrdersByStatus } from "../Utils/Utils";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -28,20 +28,21 @@ const ShippingScreen = ({navigation,route, previousScreen}) => {
     const loadShippingOrders = async () => {
         if (user) {
             try {
-                let orders = await getOrdersByStatus("Chờ giao hàng");
-                if (orders.length > 0) {
-                    await AsyncStorage.setItem(key, JSON.stringify(orders));
+                const savedOrders = await AsyncStorage.getItem(key);
+                let orders = [];
+                if (savedOrders && savedOrders.length === 0) {
+                    orders = JSON.parse(savedOrders);
                 } else {
-                    const savedOrders = await AsyncStorage.getItem(key);
-                    if (savedOrders) {
-                        orders = JSON.parse(savedOrders);
+                    orders = await getOrdersByStatus("Chờ lấy hàng");
+                    if (orders && orders.length > 0) {
+                        await AsyncStorage.setItem(key, JSON.stringify(orders));
                     }
                 }
                 const filteredOrders = orders.filter(order => order.user_id === user.id);
                 setShippingOrders(filteredOrders);
                 setNumberOfShippingOrders(filteredOrders.length);
-            } catch (err) {
-                console.error('Lỗi khi tải đơn hàng từ bộ nhớ:', err);
+            } catch (error) {
+                console.error('Lỗi khi tải đơn hàng từ bộ nhớ:', error);
             }
         } else {
             console.error('User is null');
@@ -57,12 +58,12 @@ const ShippingScreen = ({navigation,route, previousScreen}) => {
     
             // Determine the payload for updating the order
             let updatePayload = {};
-            if (currentOrder.orderStatus === "Chưa thanh toán" && currentOrder.status === "Chờ giao hàng") {
+            if (currentOrder.orderStatus === "Chưa thanh toán" && currentOrder.status === "Chờ lấy hàng") {
                 updatePayload = {
                     status: 'Đã giao hàng',
                     orderStatus: 'Đã thanh toán',
                 };
-            } else if (currentOrder.orderStatus === "Đã thanh toán" && currentOrder.status === "Chờ giao hàng") {
+            } else if (currentOrder.orderStatus === "Đã thanh toán" && currentOrder.status === "Chờ lấy hàng") {
                 updatePayload = {
                     status: 'Đã giao hàng',
                 };
@@ -140,7 +141,7 @@ const ShippingScreen = ({navigation,route, previousScreen}) => {
             <View style={styles.orderContainer}>
                 <Text style={styles.orderText}>Mã đơn hàng: {item.id}</Text>
                 <Text style={styles.orderText}>Ngày đặt: {moment(item.created_date).format('DD/MM/YYYY HH:mm')}</Text>
-                <Text style={styles.orderText}>Tổng tiền: {item.totalPrice} đ</Text>
+                <Text style={styles.orderText}>Tổng tiền: {formatPrice(item.totalPrice)} đ</Text>
             </View>
         </TouchableOpacity>
     );
@@ -149,10 +150,10 @@ const ShippingScreen = ({navigation,route, previousScreen}) => {
         <SafeAreaView style={MyStyle.setForm}>
             <View style={{height: '10%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#ccc'}}>
                 <TouchableOpacity onPress={() => navigation.navigate("Setting",{previousScreen: "WaitShipping"})}
-                            style={{width: 40, height: 40, zIndex: 1, position: 'absolute', top: 20, left: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
+                            style={{width: 40, height: 40, zIndex: 1, position: 'absolute', top: 30, left: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
                     <Icon style={{fontSize: 15, color: '#fff'}} name="chevron-left"/>
                 </TouchableOpacity>
-                <Text style={{fontSize: 25, fontWeight: 'bold'}}>Chờ giao hàng</Text>
+                <Text style={{fontSize: 25, fontWeight: 'bold', top: 5}}>Chờ giao hàng</Text>
             </View>
             <View style={{height:  windowHeight}}>
                 {numberOfShippingOrders > 0 ? (

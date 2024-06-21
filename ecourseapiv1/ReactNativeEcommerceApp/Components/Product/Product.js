@@ -6,6 +6,9 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import Order from "../Order/Order";
 import { Tooltip } from "react-native-paper";
 import Rating, { formatPrice } from "../Utils/Utils";
+import { useCart } from "../Templates/CartContext";
+import Icon from 'react-native-vector-icons/FontAwesome';
+
 
 
 
@@ -20,6 +23,7 @@ export default Product = ({previousScreen, categories,  onRatingCalculated, onSa
     const [productPrice, setProductPrice] = useState([]);
     const[loading, setLoading] = useState(false);
     const navigation = useNavigation();
+    const { favoriteItems, addFavorite, removeFavorite } = useCart(); 
     
 
     const loadProduct = async () => {
@@ -68,6 +72,30 @@ export default Product = ({previousScreen, categories,  onRatingCalculated, onSa
     const scrollViewHeight = productPrice.length * 160; // Chiều cao của mỗi sản phẩm là 230
 
 
+    const isFavorite = (productId) => {
+        return productId && favoriteItems.some(item => item.productId === productId);
+    };
+
+    const handleFavoriteToggle = async (product) => {
+        try {
+            const productId = product.id;
+            const isCurrentlyFavorite = isFavorite(productId);
+    
+            if (isCurrentlyFavorite) {
+                // Gửi yêu cầu PATCH để đánh dấu sản phẩm không còn là yêu thích
+                await APIs.patch(endpoints['like-product'](productId), { likes: [{ active: false }] });
+                removeFavorite(productId); // Xóa khỏi danh sách yêu thích local state
+            } else {
+                // Gửi yêu cầu PATCH để đánh dấu sản phẩm là yêu thích
+                await APIs.patch(endpoints['like-product'](productId), { likes: [{ active: true }] });
+                addFavorite(product); // Thêm vào danh sách yêu thích local state
+            }
+        } catch (error) {
+            console.error("Lỗi khi thay đổi trạng thái yêu thích: ", error);
+        }
+    };
+
+
     return (
         <ScrollView style={{width: '100%', height: scrollViewHeight}}>
             {loading && <ActivityIndicator />}
@@ -93,6 +121,11 @@ export default Product = ({previousScreen, categories,  onRatingCalculated, onSa
                                 </View>
                             </View>
                             <Text style={{marginLeft: 5, textDecorationLine: 'line-through', opacity: 0.3}}>300.000.000<Text style={{fontSize: 10}}> đ</Text></Text>
+                        </View>
+                        <View style={{ position: 'absolute', bottom: 5, left: 5, zIndex: 1 }}>
+                            <TouchableOpacity onPress={() => handleFavoriteToggle(p)}>
+                                <Icon name={isFavorite(p.id) ? "heart" : "heart-o"} size={16} color={isFavorite(p.id) ? "red" : "gray"} />
+                            </TouchableOpacity>
                         </View>
                         <View style={{width: '100%', height: '10%'}}>
                             <Rating productId={p.id} onRatingCalculated={onRatingCalculated}/>

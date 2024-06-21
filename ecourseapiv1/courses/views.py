@@ -55,7 +55,7 @@ class ShopViewSet(viewsets.ViewSet,generics.CreateAPIView, generics.ListAPIView,
                         status=status.HTTP_200_OK)
 
 
-class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView,generics.CreateAPIView):
+class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIView,generics.CreateAPIView, generics.DestroyAPIView, generics.UpdateAPIView):
     queryset = Products.objects.prefetch_related('tags').filter(active=True)
     serializer_class = serializers.ProductDetailsSerializer
     # pagination_class = paginators.ProductPaginator
@@ -94,11 +94,7 @@ class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAP
 
     @action(methods=['get'], url_path='comment', detail=True)
     def get_comments(self, request, pk):
-        # comments = self.get_object().comment_set.order_by('id')
         comments = self.get_object().comment_set.select_related('user').order_by('-id')
-        # q = request.query_params.get('q')
-        # if q:
-        #     comments = comments.filter(content__icontains=q)
 
         #Phân trang cho comment
         paginator = paginators.CommentPaginator()
@@ -110,41 +106,10 @@ class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAP
         return Response(serializers.CommentSerializer(comments, many=True).data)
 
     def get_permissions(self):
-        if self.action in ['list', 'create']:
-            if self.request.user.is_authenticated:
-                return [permissions.IsAuthenticated()]
-            else:
-                return [permissions.AllowAny()]
-        elif self.action in ['update', 'partial_update', 'destroy']:
-            if self.request.user.is_authenticated and self.request.user.role in [self.RoleChoices.ADMIN,
-                                                                                 self.RoleChoices.EMPLOYEE,
-                                                                                 self.RoleChoices.SELLER]:
-                return [permissions.IsAuthenticated()]
-            else:
-                return [permissions.IsAdminUser()]
+        if self.action in ['add_comment', 'like']:
+            return [permissions.IsAuthenticated()]
+
         return [permissions.AllowAny()]
-
-    # def get_permissions(self):
-    #     if self.action in ['add_comment', 'like']:
-    #         return [permissions.IsAuthenticated()]
-    #
-    #     return [permissions.AllowAny()]
-
-    # def get_permissions(self):
-    #     print(self.action)
-    #     if self.action in ['list', 'create']:
-    #         if isinstance(self.request.user, AnonymousUser):
-    #             return [permissions.IsAuthenticated()]
-    #         else:
-    #             if(self.request.user.is_authenticated and (self.request.user.role in [User.RoleChoices.SELLER,
-    #                                                                                   User.RoleChoices.EMPLOYEE,
-    #                                                                                   User.RoleChoices.ADMIN]
-    #                                                        or self.request.user.is_authenticated)):
-    #                 return [permissions.IsAuthenticated()]
-    #     return [permissions.AllowAny()]
-
-    # if self.action in ['add_comment','like']:
-    #     return [permissions.IsAuthenticated()]
 
     def get_serializer_class(self):
         if self.request.user.is_authenticated:
@@ -161,12 +126,21 @@ class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAP
 
 
     @action(methods=['post'], url_path = 'like', detail=True)
-    def like(self, request, pk):
+    def add_like(self, request, pk):
         like,created = Like.objects.get_or_create(product = self.get_object(), user = request.user)
         if not created:
             like.active = not like.active
             like.save()
         return Response(serializers.ProductDetailsSerializer(self.get_object()).data)
+
+    @action(methods=['get'], url_path='likes', detail=True)
+    def get_like(self, request, pk):
+        product = self.get_object()
+        likes = product.like_set.filter(active=True)
+        q = request.query_params.get('q')
+        if q:
+            likes = likes.filter(id__icontains=q)
+        return Response(serializers.LikeSerializer(likes, many=True).data, status=status.HTTP_200_OK)
 
     @action(methods=['get'], url_path='reviews', detail=True)
     def get_review(self, request, pk):
@@ -185,24 +159,9 @@ class ProductViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAP
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.UpdateAPIView, PermissionRequiredMixin):
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
-    parser_classes = [parsers.MultiPartParser]
+    parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
     # permission_classes = [permissions.IsAuthenticated]
 
-    #Xác thực User
-    # def get_permissions(self):
-    #     if self.action in ['create','update','partial_update', 'destroy']:
-    #         if self.request.user.is_authenticated:
-    #             return [permissions.IsAuthenticated()]
-    #         else:
-    #             return [permissions.AllowAny()]
-    #     elif self.action in ['update', 'partial_update', 'destroy']:
-    #         if self.request.user.is_authenticated and self.request.user.role in [self.RoleChoices.ADMIN,
-    #                                                                              self.RoleChoices.EMPLOYEE]:
-    #             return [permissions.IsAuthenticated()]
-    #         else:
-    #             return [permissions.IsAdminUser()]
-    #             # raise exceptions.PermmissionDenied()
-    #     return [permissions.AllowAny()]
 
 
     def get_permissions(self):
@@ -254,47 +213,40 @@ class OrderViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.ListAPIV
     serializer_class = serializers.OrderSerializer
     permission_classes = [permissions.AllowAny]
 
-    def get_permissions(self):
-        if self.action in ['get_queryset', 'update_paid']:
-            return [permissions.IsAuthenticated()]
+    # def get_permissions(self):
+    #     if self.action in ['update_paid']:
+    #         return [permissions.IsAuthenticated()]
+    #
+    #     return [permissions.AllowAny()]
 
-        return [permissions.AllowAny()]
 
-    def get_queryset(self):
-        queryset = self.queryset
 
-        if self.action.__eq__('list'):
-            q = self.request.query_params.get('q')
-            if q:
-                queryset = queryset.filter(user_id=q)
-        return queryset
-
-    @action(detail=True, methods=['patch'], url_path='upload_proof', url_name='upload_proof')
-    def upload_proof(self, request, pk):
-        # user_id = request.user.id
-        fee_id = self.get_object()
-        print(fee_id)
-        avatar_file = request.data.get('', None)
-
-        try:
-            orderFee = get_object_or_404(Orders, id=fee_id)
-            new_avatar = cloudinary.uploader.upload(avatar_file)
-            orderFee.payment_proof = new_avatar['secure_url']
-            orderFee.statusPayment = True
-            orderFee.save()
-        except Orders.DoesNotExist:
-            return ResponseRest({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-
-    @action(methods=['patch'], detail=True, url_path='update-paid')
-    def update_paid(self, request, pk=None):
-        try:
-            orderFee = self.get_object()
-            orderFee.user_id = request.user.user_id
-            orderFee.statusPayment = True
-            orderFee.save()
-            return ResponseRest({'message': 'Receipt paid successfully'}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return ResponseRest(dict(error=e.__str__()), status=status.HTTP_400_BAD_REQUEST)
+    # @action(detail=True, methods=['patch'], url_path='upload_proof', url_name='upload_proof')
+    # def upload_proof(self, request, pk):
+    #     # user_id = request.user.id
+    #     fee_id = self.get_object()
+    #     print(fee_id)
+    #     avatar_file = request.data.get('', None)
+    #
+    #     try:
+    #         orderFee = get_object_or_404(Orders, id=fee_id)
+    #         new_avatar = cloudinary.uploader.upload(avatar_file)
+    #         orderFee.payment_proof = new_avatar['secure_url']
+    #         orderFee.statusPayment = True
+    #         orderFee.save()
+    #     except Orders.DoesNotExist:
+    #         return ResponseRest({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    #
+    # @action(methods=['patch'], detail=True, url_path='update-paid')
+    # def update_paid(self, request, pk=None):
+    #     try:
+    #         orderFee = self.get_object()
+    #         orderFee.user_id = request.user.user_id
+    #         orderFee.statusPayment = True
+    #         orderFee.save()
+    #         return ResponseRest({'message': 'Receipt paid successfully'}, status=status.HTTP_200_OK)
+    #     except Exception as e:
+    #         return ResponseRest(dict(error=e.__str__()), status=status.HTTP_400_BAD_REQUEST)
 
 
 class TagViewSet(viewsets.ViewSet, generics.ListAPIView,generics.CreateAPIView):
@@ -325,7 +277,7 @@ class MomoViewSet(viewsets.ViewSet):
         print(request_data)
 
         endpoint = "https://test-payment.momo.vn/v2/gateway/api/create"
-        ipnUrl = "http://951f-171-243-49-117.ngrok-free.app/momo/momo_ipn/"
+        ipnUrl = ""
 
         accessKey = "F8BBA842ECF85"
         secretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz"

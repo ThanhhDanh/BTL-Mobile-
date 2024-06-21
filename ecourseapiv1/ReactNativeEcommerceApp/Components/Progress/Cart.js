@@ -10,8 +10,9 @@ import { Alert } from 'react-native';
 
 export default function CartScreen({ navigation, route }) {
     const { cartItems, removeFromCart } = useCart();
-    const [selectedItems, setSelectedItems] = useState([]);
+    const [selectedItems, setSelectedItems] = useState(route.params?.selectedCartItems || []);
     const [previousScreen, setPreviousScreen] = useState(null);
+    const {shopId} = route.params || {};
 
     const toggleSelection = (item) => {
         if (selectedItems.includes(item)) {
@@ -22,7 +23,13 @@ export default function CartScreen({ navigation, route }) {
     };
 
     const renderCartItem = ({ item }) => (
-        <TouchableOpacity onPress={() => toggleSelection(item)}>
+        <TouchableOpacity onPress={() => {
+            if (!selectedItems.includes(item)) {
+                toggleSelection(item);
+            } else {
+                Alert.alert('Thông báo', 'Sản phẩm này đã được chọn để thanh toán.');
+            }
+        }}>
             <View style={[styles.cartItem, selectedItems.includes(item) && styles.selectedItem]}>
                 <View style={styles.productDetails}>
                     <Text style={styles.productName}>{item.name}</Text>
@@ -39,7 +46,8 @@ export default function CartScreen({ navigation, route }) {
 
     const handleCheckout = () => {
         if (selectedItems.length > 0) {
-            navigation.navigate('CheckoutScreen', { selectedCartItems: selectedItems });
+            selectedItems.forEach(item => removeFromCart(item.id));
+            navigation.navigate('CheckoutScreen', { selectedCartItems: selectedItems, previousScreen: 'Cart' });
         } else {
             Alert.alert('Thông báo', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán');
         }
@@ -55,7 +63,7 @@ export default function CartScreen({ navigation, route }) {
 
     const handleGoBack = () => {
         if (previousScreen) {
-            navigation.navigate(previousScreen);
+            navigation.navigate(previousScreen, {shopId: shopId});
         } else {
             navigation.goBack();
         }
@@ -65,10 +73,10 @@ export default function CartScreen({ navigation, route }) {
         <SafeAreaView style={MyStyle.setForm}>
              <View style={{height: '10%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#ccc'}}>
                 <TouchableOpacity onPress={handleGoBack}
-                            style={{width: 40, height: 40, zIndex: 1, position: 'absolute', top: 20, left: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
+                            style={{width: 40, height: 40, zIndex: 1, position: 'absolute', top: 35, left: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
                     <Icon style={{fontSize: 15, color: '#fff'}} name="chevron-left"/>
                 </TouchableOpacity>
-                <Text style={{fontSize: 25, fontWeight: 'bold'}}>Giỏ hàng</Text>
+                <Text style={{fontSize: 25, fontWeight: 'bold', top: 10}}>Giỏ hàng</Text>
             </View>
             {cartItems.length === 0 ? (
                     <View style={styles.emptyCartContainer}>

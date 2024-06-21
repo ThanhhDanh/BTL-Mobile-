@@ -8,6 +8,8 @@ export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState([]);
     const [shippingOrders, setShippingOrders] = useState([]);
     const [waitingOrders, setWaitingOrders] = useState([]);
+    const [notificationOrders, setNotificationOrders] = useState([]);
+    const [favoriteItems, setFavoriteItems] = useState([]);
     const {user} = useContext(MyContext);
     const [selectedProducts, setSelectedProducts] = useState([]);
 
@@ -32,6 +34,18 @@ export const CartProvider = ({ children }) => {
                     if (savedWaitingOrders) {
                         setWaitingOrders(JSON.parse(savedWaitingOrders));
                     }
+
+                    const savedNotificationOrders = await AsyncStorage.getItem(`notifications_${user.username}_${user.id}`);
+                    // console.info(savedWaitingOrders)
+                    if (savedNotificationOrders) {
+                        setNotificationOrders(JSON.parse(savedNotificationOrders));
+                    }
+
+                    const savedFavoriteItems = await AsyncStorage.getItem(`favorites_${user.username}_${user.id}`);
+                    if (savedFavoriteItems) {
+                        setFavoriteItems(JSON.parse(savedFavoriteItems));
+                    }
+
                 } catch (error) {
                     console.error('Failed to load data from storage:', error);
                 }
@@ -47,6 +61,8 @@ export const CartProvider = ({ children }) => {
                 await AsyncStorage.setItem(`cart_${user.username}_${user.id}`, JSON.stringify(cartItems));
                 await AsyncStorage.setItem(`waitingOrders_${user.username}_${user.id}`, JSON.stringify(waitingOrders));
                 await AsyncStorage.setItem(`shippingOrders_${user.username}_${user.id}`, JSON.stringify(shippingOrders));
+                await AsyncStorage.setItem(`notifications_${user.username}_${user.id}`, JSON.stringify(notificationOrders));
+                await AsyncStorage.setItem(`favorites_${user.username}_${user.id}`, JSON.stringify(favoriteItems));
             } catch (error) {
                 console.error('Failed to save data to storage:', error);
             }
@@ -55,7 +71,7 @@ export const CartProvider = ({ children }) => {
 
     useEffect(() => {
         saveCartData();
-    }, [cartItems, waitingOrders, shippingOrders]);
+    }, [cartItems, waitingOrders, shippingOrders, favoriteItems, notificationOrders]);
 
     const addToCart = (product) => {
         setCartItems(prevItems => {
@@ -108,9 +124,17 @@ export const CartProvider = ({ children }) => {
     setSelectedProducts(selectedProducts.filter(product => product.id !== productId));
   };
 
+   // Add functions for favorites
+   const addFavorite = (product) => {
+    setFavoriteItems(prevItems => [...prevItems, { userId: user.id, username: user.username, productId: product.id }]);
+};
+
+    const removeFavorite = (productId) => {
+        setFavoriteItems(prevItems => prevItems.filter(item => item.productId !== productId));
+    };
 
     return (
-        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, setCartItems, updateCartItemQuantity, shippingOrders, setShippingOrders, waitingOrders, setWaitingOrders, addSelectedProduct, removeSelectedProduct }}>
+        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, setCartItems, updateCartItemQuantity, shippingOrders, setShippingOrders, waitingOrders, setWaitingOrders, addSelectedProduct, removeSelectedProduct, favoriteItems, addFavorite, removeFavorite }}>
             {children}
         </CartContext.Provider>
     );

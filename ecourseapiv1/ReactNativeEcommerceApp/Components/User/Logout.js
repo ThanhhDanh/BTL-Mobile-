@@ -16,6 +16,7 @@ export default function Logout({ navigation }) {
             if (user && user.username) {
                 await AsyncStorage.removeItem('user');
                 await AsyncStorage.removeItem('access-token');
+                // await AsyncStorage.removeItem('replies');
                 // await AsyncStorage.removeItem(`shippingOrders_${user.username}_${user.id}`);
                 // await AsyncStorage.removeItem(`notifications_${user.username}_${user.id}`);
                 
@@ -27,7 +28,7 @@ export default function Logout({ navigation }) {
                 clearCart();
 
                 // Reset authentication and role
-                setIsAuthenticated(false);
+                // setIsAuthenticated(false);
                 setRole(null);
 
                 // Navigate to the home screen

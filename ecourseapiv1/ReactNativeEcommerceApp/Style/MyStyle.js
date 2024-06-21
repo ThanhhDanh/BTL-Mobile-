@@ -104,7 +104,7 @@ export default StyleSheet.create({
     searchResults: {
         maxHeight: 350, // Đặt chiều cao tối đa cho kết quả tìm kiếm      
         position: 'absolute',
-        top: 100,
+        top: 118,
         left: 0,
         right: 0,
         width: windowWidth - 60,

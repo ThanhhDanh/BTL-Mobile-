@@ -31,7 +31,7 @@ class BaseModel(models.Model):
 
 
 class Tag(BaseModel):
-    name = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=50, unique=True, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -89,27 +89,22 @@ class Orders(ItemBase):
     PAYMENT_METHOD_CHOICES = [
         ('COD', 'Thanh toán khi nhận hàng'),
         ('MOMO', 'Ví điện tử Momo'),
-        # Add other payment methods here
     ]
 
     STATUS_PAYMENT_CHOICES = [
         ('PENDING', 'Pending'),
         ('DENY', 'Deny'),
         ('DONE', 'Done'),
-        # Add other status choices here
     ]
 
-    # class EnumStatusFee(models.TextChoices):
-    #     PENDING = 'Đang chờ xử lý', 'Đang xử lý'
-    #     DENY = 'Không thể xử lý', 'Thất Bại'
-    #     DONE = 'Đã đăng ký', 'Thành Công'
+
 
     payment_proof = CloudinaryField(null=True)
     paymentMethod = models.CharField(max_length=50, choices=PAYMENT_METHOD_CHOICES)
     statusPayment = models.CharField(max_length=50, choices=STATUS_PAYMENT_CHOICES)
     quantity = models.IntegerField()
     totalPrice = models.IntegerField()
-    discount = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # Thêm trường discount
+    discount = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     orderStatus = models.CharField(max_length = 50)
     status = models.CharField(max_length=50)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)

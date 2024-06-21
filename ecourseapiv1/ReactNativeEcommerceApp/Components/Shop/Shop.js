@@ -143,12 +143,16 @@
         }   
 
         const handleShopSelect = (shopId) => {
-            navigation.navigate('ShopDetails', { shopId: shopId}, {onRatingCalculated: handleRatingCalculated, 
+            navigation.navigate('ShopDetails', { shopId}, {onRatingCalculated: handleRatingCalculated, 
                 onSalesCalculated: handleSalesCalculated});
+                setShops([]);
+                setProducts([]);
         };
 
         const handleProductSelect = (productId) => {
             navigation.navigate('ProductDetails', { productId });
+            setShops([]);
+            setProducts([]);
         };
 
         const handleShopByNameSelect = (shopId) => {
@@ -278,7 +282,7 @@
                     <Animated.View style={[MyStyle.navBar,{transform: [{ translateX: slideAnim }]}]}>
                             <View style={{width: windowWidth, height: '100%', backgroundColor: 'rgba(52, 52, 52, 0.3)'}}>
                                 <TouchableOpacity onPress={show}
-                                    style={{height: '15%', width: 60, left:'45%'}}>
+                                    style={{height: '15%', width: 60, left:'45%', top: 40}}>
                                     <Icon style={{fontSize: 30, color: '#fff', padding: 20, textAlign: 'center'}} name="xmark"/>
                                 </TouchableOpacity>
                                 <View style={{width: '50%', height: '50%', alignItems: 'center', marginLeft: 20}}>

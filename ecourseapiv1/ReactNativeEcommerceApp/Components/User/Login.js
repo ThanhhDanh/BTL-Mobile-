@@ -114,7 +114,6 @@ const BodyLogin = ({navigation})=>{
                 setIsAuthenticated(true);
     
                 console.log('userRes: ' + JSON.stringify(userRes.data,null,2));
-                console.log('userRole: ' + role)
     
                 const userData = userRes.data;
     
@@ -370,17 +369,13 @@ const FormRegister = ({ page, setPage,isRegister,setIsRegister, navigation}) => 
                     >   
                     <Icon style={{fontSize: 20, marginRight: 10}} name="image"/>
                     <Text style={{fontSize: 20}}>Avatar</Text>
-                    {/* <Image style={{width: 50, height: 50}} source={{uri: avatar}} /> */}
-                    {/* {avatar?<Image style={{width: 40, height: 40}} source={{uri: avatar}} />:""} */}
                     </TouchableOpacity>
                 </View>
                 {/* Modal hiển thị ảnh */}
-                <View style={{width: 100, height: 100, marginLeft: 30, marginTop: 20, borderRadius: 100, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
-                    {/* <Image style={{ width: '100%', height: '100%' }} resizeMode="contain" source={{ uri: avatar }} /> */}
+                <View style={{width: 100, height: 100, marginLeft: 30, marginTop: 20, borderRadius: 100, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}> 
                     {user.avatar !== ' ' && user.avatar ?
                         (<Image style={{ width: '100%', height: '100%', borderRadius: 100 }} resizeMode="contain" source={{ uri: user.avatar.uri }} />) : 
                         (<Icon style={{fontSize: 60, color:'#c9c2c2'}} name="image"/>)}
-                    {/* <Icon style={{fontSize: 60, color:'#c9c2c2'}} name="image"/> */}
                 </View>
             </View>
             <View style={{flexDirection: 'row', alignItems:'center',width: windowWidth - 60, marginLeft: 30, marginTop: 20, height: 40, backgroundColor: '#fff'}}>

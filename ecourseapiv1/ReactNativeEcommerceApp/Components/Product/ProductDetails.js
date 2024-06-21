@@ -22,6 +22,7 @@ import { useFocusEffect } from "@react-navigation/native";
 const {width: windowWidth} = Dimensions.get('window')
 const {height: windowHeight} = Dimensions.get('window')
 
+
 const ProductDetails = ({ route, navigation}) => {
     const [productDetail, setProductDetail] = useState(null);
     const [comment, setComment] = useState(null);
@@ -32,8 +33,10 @@ const ProductDetails = ({ route, navigation}) => {
     const { width } = useWindowDimensions();
     const {user} = useContext(MyContext);
     const [previousScreen, setPreviousScreen] = useState(null);
+    const [shopReplies, setShopReplies] = useState({});
+    const [shopAvatars, setShopAvatars] = useState({});
 
-    // console.info(productDetail)
+    // console.info(widthComment)
 
     const loadProductDetail = async () => {
         try {
@@ -161,6 +164,40 @@ const ProductDetails = ({ route, navigation}) => {
      });
 
 
+    const loadShopRepliesFromAsyncStorage = async () => {
+        try {
+            const storedReplies = await AsyncStorage.getItem('replies');
+            if (storedReplies) {
+                const parsedReplies = JSON.parse(storedReplies);
+                setShopReplies(parsedReplies[shopId] || {});
+    
+                // Lấy danh sách avatar của shop từ phản hồi và cập nhật vào state shopAvatars
+                const avatarPromises = Object.keys(parsedReplies[shopId] || {}).map(async (reviewId) => {
+                    const response = await APIs.get(endpoints['shop-details'](shopId));
+                    return {
+                        reviewId: reviewId,
+                        avatar: response.data.image,
+                    };
+                });
+    
+                const avatars = await Promise.all(avatarPromises);
+                const avatarMap = avatars.reduce((acc, curr) => {
+                    acc[curr.reviewId] = curr.avatar;
+                    return acc;
+                }, {});
+    
+                setShopAvatars(avatarMap);
+            }
+        } catch (error) {
+            console.error('Error loading shop replies from AsyncStorage:', error);
+        }
+    };
+
+    useEffect(() => {
+        loadShopRepliesFromAsyncStorage();
+    }, []);
+
+
     return (
             <View style={{width: '100%', height: '100%'}}>
                  <TouchableOpacity onPress={handleGoBack}
@@ -174,7 +211,7 @@ const ProductDetails = ({ route, navigation}) => {
                     <Icon style={{fontSize: 20, color: '#fff'}} name="comment"/>
                 </TouchableOpacity>}
                 {user && <TouchableOpacity onPress={() =>navigation.navigate('Cart', {'productDetail': productDetail },{ previousScreen: 'ProductDetail' })}
-                            style={{width: 40, height: 40,zIndex: 1, position: 'absolute',top:20, right: 90, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
+                            style={{width: 40, height: 40,zIndex: 1, position: 'absolute',top:40, right: 90, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
                             <Icon style={{fontSize: 20, color: '#fff'}} name="cart-shopping"/>
                             {cartItems.length > 0 && <View style={{position: 'absolute', top: -5, right: -5, backgroundColor: 'red', borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center'}}>
                                 <Text style={{color: '#fff', fontSize: 12}}>{cartItems.length}</Text>
@@ -221,8 +258,8 @@ const ProductDetails = ({ route, navigation}) => {
 
                             <View style={{width: windowWidth - 30, height: windowHeight, alignSelf: 'center'}}>
                                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}></KeyboardAvoidingView>
-                                {comment===null?<ActivityIndicator />: <>
-                                <ScrollView onScroll={loadMoreInfo} >
+                                {comment===null?<ActivityIndicator style={{flex: 1, justifyContent: 'center'}} />: <>
+                                <ScrollView style={{flex: 1}} onScroll={loadMoreInfo} >
                                     <View style={{justifyContent: "center", alignItems: "center", flexDirection: 'row'}}>
                                         <TextInput value={content} onChangeText={t => setContent(t)} style={MyStyle.textInput} placeholder="Nội dung bình luận..." />
                                         <TouchableOpacity onPress={addComment}>
@@ -231,12 +268,23 @@ const ProductDetails = ({ route, navigation}) => {
                                     </View>
                                     {comment.map(c => <>
                                         <View key={c.id}>
-                                            <View style={{flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1,borderColor: '#ccc'}}>
+                                            <View style={{flexDirection: 'row', alignItems: 'center'}}>
                                                 <Image source={{uri: c.user.avatar}} style={[MyStyle.imgComment]} />
                                                 <View style={{marginLeft: 20}}>
                                                     <Text>{c.content}</Text>
                                                     <Text>{moment(c.created_date).fromNow()}</Text>
                                                 </View>
+                                            </View>
+                                            <View style={{ marginBottom: 10, borderBottomWidth: 1,borderColor: '#ccc'}}>
+                                                {Object.keys(shopReplies).map((reviewId) => (
+                                                    <View key={reviewId} style={{ marginTop: 5, padding: 5}}>
+                                                        <View style={{ flexDirection: 'row-reverse', alignItems: 'center' }}>
+                                                            <Image source={{ uri: shopAvatars[reviewId] }} style={MyStyle.imgComment}/>
+                                                            <Text>{shopReplies[reviewId]}</Text>
+                                                        </View>
+                                                    </View>
+                                                ))}
+                                                {Object.keys(shopReplies).length === 0 && <Text>Chưa có phản hồi từ shop cho sản phẩm này.</Text>}
                                             </View>
                                         </View>
                                     </>)}

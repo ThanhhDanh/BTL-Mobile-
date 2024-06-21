@@ -31,6 +31,7 @@ const NotificationScreen = ({navigation, route }) => {
                 const key = `notifications_${user.username}_${user.id}`;
                 const savedNotifications = JSON.parse(await AsyncStorage.getItem(key)) || [];
                 const updatedNotifications = savedNotifications.filter(notification => notification.orderId !== orderId);
+                console.log(updatedNotifications)
                 await AsyncStorage.setItem(key, JSON.stringify(updatedNotifications));
                 setNotifications(updatedNotifications);
                 setNotificationCount(updatedNotifications.length);
@@ -62,7 +63,11 @@ const NotificationScreen = ({navigation, route }) => {
                 console.error('Error in removeNotification:', error);
             }
         } else {
-            console.error('User is null');
+            return (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text>Vui lòng đăng nhập để xem thông báo</Text>
+                </View>
+            );
         }
     };
 

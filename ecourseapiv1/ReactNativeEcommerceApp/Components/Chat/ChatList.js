@@ -69,9 +69,9 @@ const ChatList = () => {
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
-            <View style={{ height: '10%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#ccc' }}>
+            <View style={{ height: '10%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#ccc', zIndex: 1 }}>
                 <TouchableOpacity onPress={() => navigation.navigate('Setting')}
-                    style={{ width: 40, height: 40, zIndex: 1, position: 'absolute', top: 25, left: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.06)', borderRadius: 50 }}>
+                    style={{ width: 40, height: 40, zIndex: 1, position: 'absolute', top: 30, left: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.06)', borderRadius: 50 }}>
                     <Icon style={{ fontSize: 15, color: '#000' }} name="chevron-left" />
                 </TouchableOpacity>
                 <Text style={{ fontSize: 25, fontWeight: 'bold' }}>Danh sách chat</Text>

@@ -91,21 +91,6 @@ class MyShopAdmin(admin.ModelAdmin):
                 return mark_safe(f"<img width='140' src='/static/{instance.image.name}' />")
         return "Không có ảnh"
 
-class OrderForm(forms.ModelForm):
-
-    class Meta:
-        model = Orders
-        fields = '__all__'
-
-# class OrderFeeAdmin(admin.ModelAdmin):
-#
-#     list_display = ['id','payment_proof', 'paymentMethod', 'statusPayment', 'quantity', 'totalPrice', 'discount',
-#                     'orderStatus','status','user_id','product_id','shop_id']
-#     search_fields = ['payment_proof', 'user_id',
-#                      'product_id']
-#     list_filter = ['paymentMethod', 'statusPayment', ]
-#     form=OrderForm
-
 
 class AppAdminSite(admin.AdminSite):
     site_header = 'Hệ Thống sàn giao dịch thương mại điện tử'

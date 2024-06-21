@@ -21,8 +21,8 @@ const Setting = ({navigation, route})=>{
     const [numberOfWaitingConfirmationOrders, setNumberOfWaitingConfirmationOrders] = useState(0);
     const [numberOfShippingOrders, setNumberOfShippingOrders] = useState(0);
     const { productId, updatedOrders  } = route.params || {};
-    const keyWaitingConfirmation = `waitingOrders_${user.username}_${user.id}`;
-    const keyShippingOrders = `shippingOrders_${user.username}_${user.id}`;
+    const keyWaitingConfirmation = user ? `waitingOrders_${user.username}_${user.id}` : '';
+    const keyShippingOrders = user ? `shippingOrders_${user.username}_${user.id}` : '';
 
     //Menu
     const [showInfo, setShowInfo] = useState(false);
@@ -45,6 +45,7 @@ const Setting = ({navigation, route})=>{
                 const savedWaitingOrders = await AsyncStorage.getItem(keyWaitingConfirmation);
                 const savedShippingOrders = await AsyncStorage.getItem(keyShippingOrders);
 
+
                 let waitingOrders = [];
                 let shippingOrders = [];
 
@@ -60,7 +61,7 @@ const Setting = ({navigation, route})=>{
                 if (savedShippingOrders && savedShippingOrders.length === 0) {
                     shippingOrders = JSON.parse(savedShippingOrders);
                 } else {
-                    shippingOrders = await getOrdersByStatus("Chờ giao hàng");
+                    shippingOrders = await getOrdersByStatus("Chờ lấy hàng");
                     if (shippingOrders && shippingOrders.length === 0) {
                         await AsyncStorage.setItem(keyShippingOrders, JSON.stringify(shippingOrders));
                     }
@@ -69,8 +70,9 @@ const Setting = ({navigation, route})=>{
                 const filteredWaitingOrders = waitingOrders.filter(order => order.user_id === user.id);
                 const filteredShippingOrders = shippingOrders.filter(order => order.user_id === user.id);
 
-                setNumberOfWaitingConfirmationOrders(waitingOrders.length);
-                setNumberOfShippingOrders(shippingOrders.length);
+                
+                setNumberOfWaitingConfirmationOrders(filteredWaitingOrders.length);
+                setNumberOfShippingOrders(filteredShippingOrders.length);
             } catch (error) {
                 console.error('Lỗi khi tải đơn hàng từ bộ nhớ:', error);
             }
@@ -83,6 +85,13 @@ const Setting = ({navigation, route})=>{
         },[user])
     )
     
+    const handleStartSelling = () => {
+        if (user.role === 'seller') {
+            navigation.navigate('ShopOwner');
+        } else {
+            navigation.navigate('CreateShop');
+        }
+    };
 
 
     return (
@@ -100,6 +109,9 @@ const Setting = ({navigation, route})=>{
                         ):''}
 
                         <View style={{flexDirection: 'row', alignItems: 'center', position: 'absolute', top: 35, right: 15}}>
+                            <TouchableOpacity onPress={()=>navigation.navigate("FavoritesScreen" , {previousScreen: 'Setting'})}>
+                                <Icon style={{fontSize: 25, color: '#fff', margin: 10}} name="heart"/>
+                            </TouchableOpacity>
                             <TouchableOpacity>
                                 <Icon style={{fontSize: 25, color: '#fff', margin: 10}} name="gears"/>
                             </TouchableOpacity>
@@ -144,11 +156,16 @@ const Setting = ({navigation, route})=>{
                     </View>
                 </View>
                 <View style={{width: '100%', height: '25%'}}>
-                    <TouchableOpacity onPress={() => navigation.navigate("CreateShop")}>
-                        <View style={{flexDirection: 'row', alignItems: 'center', marginLeft: 20, marginBottom: 20}}>
+                    <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', marginBottom: 20}}
+                        onPress={handleStartSelling}>
+                        <View style={{flexDirection: 'row', alignItems: 'center', marginLeft: 20}}>
                             <Icon style={{fontSize: 30 , color: '#4D8D6E'}} name="shop"/>
-                            <Text style={{marginLeft: 10, fontSize: 18}}>Tiếp thị liên kết</Text>
+                            <Text style={{marginLeft: 10, fontSize: 18}}>Bắt đầu bán</Text>
                         </View>
+                        {user.role !== 'seller' && <View style={{flexDirection: 'row', alignItems: 'center', left: 120, marginLeft: 20, borderBottomWidth: 1, borderColor: 'rgb(97, 109, 138)'}}>
+                            <Text style={{marginRight: 10, fontSize: 14, color: 'rgb(97, 109, 138)'}}>Đăng ký miễn phí</Text>
+                            <Icon style={{fontSize: 14 , color: 'rgb(97, 109, 138)', right: 0}} name="chevron-right"/>
+                        </View>}
                     </TouchableOpacity>
                     <TouchableOpacity onPress={toggleInfo}>
                         <View style={{flexDirection: 'row', alignItems: 'center', marginLeft: 20}}>

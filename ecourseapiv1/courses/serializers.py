@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from courses.models import Category, Products, Reviews, Orders, Tag, User, Comment, Shop
+from courses.models import Category, Products, Reviews, Orders, Tag, User, Comment, Shop, Like
 
 
 
@@ -17,7 +17,21 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 
+class LikeSerializer(serializers.ModelSerializer):
+    active = serializers.BooleanField()
+    class Meta:
+        model = Like
+        fields = ['id','active']
+
+
 class OrderSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        if rep['payment_proof'] is not None:
+            rep['payment_proof'] = instance.payment_proof.url
+
+        return rep
     class Meta:
         model = Orders
         fields = '__all__'
@@ -80,19 +94,21 @@ class ProductSerializer(ItemSerializer):
 
 
 class ProductDetailsSerializer(ProductSerializer):
-    tags = TagSerializer(many=True)
+    tags = TagSerializer(many=True, required=False)
+    likes = LikeSerializer(many=True, required=False)
 
     class Meta:
         model = ProductSerializer.Meta.model
-        fields = ProductSerializer.Meta.fields + ['content', 'tags']
+        fields = ProductSerializer.Meta.fields + ['content', 'tags', 'likes']
 
 
 
 class ShopSerializer(ItemSerializer):
     products = ProductSerializer(many=True, read_only=True, source='product')
+    owner = UserSerializer(read_only=True)  # Thêm serializer cho owner để hiển thị thông tin của owner
     class Meta:
         model = Shop
-        fields = ['id','name','image','owner','address','products']
+        fields = ['id','name','image','owner','address','products','category']
 
 
 class ShopDetailsSerializer(ShopSerializer):
@@ -108,7 +124,6 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id','name','created_date','updated_date','shops']
-
 
 
 

@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 
-const BASE_URL = 'http://192.168.1.149:8000/';
+const BASE_URL = 'http://192.168.1.201:8000/';
 
 export const endpoints = {
     'categories':'/categories/',
@@ -18,7 +18,8 @@ export const endpoints = {
     'tags':'/tags/',
     'current-user': '/users/current-user/',
     'login': '/o/token/',
-    'momo': '/momo/process/'
+    'momo': '/momo/process/',
+    'like-product': (productId) => `/products/${productId}/like/`
 }
 
 

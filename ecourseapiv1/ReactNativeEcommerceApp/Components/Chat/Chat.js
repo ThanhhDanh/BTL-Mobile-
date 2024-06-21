@@ -118,7 +118,7 @@ export default function Chat() {
     return (
         <SafeAreaView style={{ width: '100%', height: '100%' }}>
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} />
-            <View style={{ position: 'absolute', top: 0, width: '100%', zIndex: 1, flexDirection: 'row', alignItems: 'center', padding: 15 }}>
+            <View style={{ position: 'absolute', top: 25, width: '100%', zIndex: 1, flexDirection: 'row', alignItems: 'center', padding: 15 }}>
                 <TouchableOpacity onPress={handleGoBack}
                     style={{ width: 40, height: 40, zIndex: 1, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.06)', borderRadius: 50 }}>
                     <Icon style={{ fontSize: 15, color: '#000' }} name="chevron-left" />
@@ -127,7 +127,7 @@ export default function Chat() {
             </View>
             <View style={{ flex: 1 }}>
                 {loading ? (
-                    <ActivityIndicator size="large" color="#ccc" style={{ marginTop: 60 }} />
+                    <ActivityIndicator size="large" color="#ccc" style={{ marginTop: 100 }} />
                 ) : (
                     <GiftedChat
                         messages={messages}

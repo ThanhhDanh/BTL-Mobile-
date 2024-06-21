@@ -37,6 +37,12 @@ import Chat from './Components/Chat/Chat';
 import ChatList from './Components/Chat/ChatList';
 import CreateShop from './Components/Shop/CreateShop';
 import AddProduct from './Components/Product/AddProduct';
+import ShopOwner from './Components/Shop/ShopOwner';
+import ProductManagement from './Components/Product/ProductManagement';
+import WaitConfirmationShop from './Components/Templates/WaitConfirmationShop';
+import WaitShippingShop from './Components/Templates/WaitShippingShop';
+import WaitDeliveredShop from './Components/Templates/WaitDeliveredShop';
+import FavoritesScreen from './Components/Templates/FavoritesScreen ';
 
 
 
@@ -98,7 +104,14 @@ function MyTabs() {
       <Tab.Screen name="ShopItemByName" component={ShopItemByName} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
       <Tab.Screen name="Chat" component={Chat} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
       <Tab.Screen name="CreateShop" component={CreateShop} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
-      <Tab.Screen name="AddProduct" component={AddProduct} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} /><Tab.Screen name="ChatList" component={ChatList} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="AddProduct" component={AddProduct} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="ChatList" component={ChatList} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="ShopOwner" component={ShopOwner} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="ProductManagement" component={ProductManagement} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="WaitConfirmationShop" component={WaitConfirmationShop} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="WaitShippingShop" component={WaitShippingShop} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="WaitDeliveredShop" component={WaitDeliveredShop} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
+      <Tab.Screen name="FavoritesScreen" component={FavoritesScreen} options={{tabBarIconStyle: {display: 'none'}, tabBarLabelStyle: {display: 'none'}, tabBarItemStyle:{position: 'absolute'} }} />
     </Tab.Navigator>
   );
 }
@@ -108,6 +121,18 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [role, setRole] = useState();
   const [notificationCount, setNotificationCount] = useState(0);
+  
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+        if (user) {
+            const notificationKey = `notifications_${user.username}_${user.id}`;
+            const notifications = JSON.parse(await AsyncStorage.getItem(notificationKey)) || [];
+            setNotificationCount(notifications.length);
+        }
+    };
+
+    fetchNotificationCount();
+}, [user]);
 
   useEffect(() => {
     const getAccessToken = async () => {

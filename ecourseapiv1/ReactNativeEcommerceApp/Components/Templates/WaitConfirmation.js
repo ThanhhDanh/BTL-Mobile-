@@ -5,7 +5,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { authAPI, endpoints } from "../../Configs/APIs";
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import moment from 'moment';
-import { getOrdersByStatus } from "../Utils/Utils";
+import { formatPrice, getOrdersByStatus } from "../Utils/Utils";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from "@react-navigation/native";
 
@@ -21,12 +21,6 @@ export default WaitingConfirmationScreen = ({navigation, route, previousScreen})
         }, [user])
     );
 
-    useEffect(() => {
-        const timers = waitingConfirmationOrders.map(order => 
-            setTimeout(() => moveToShipping(order.id), 60000)
-        );
-        return () => timers.forEach(timer => clearTimeout(timer));
-    }, [waitingConfirmationOrders]);
 
     const loadWaitingConfirmationOrders = async () => {
         if(user) {
@@ -55,34 +49,31 @@ export default WaitingConfirmationScreen = ({navigation, route, previousScreen})
         }
     };
 
-    // useEffect(() => {
-    //     loadWaitingConfirmationOrders();
-    // }, [user]);
 
 
-    const moveToShipping = async (orderId) => {
-        try {
-            // Gửi yêu cầu cập nhật trạng thái đơn hàng đến máy chủ
-            await authAPI().patch(`${endpoints.orders}${orderId}/`, { status: "Chờ giao hàng" });
+    // const moveToShipping = async (orderId) => {
+    //     try {
+    //         // Gửi yêu cầu cập nhật trạng thái đơn hàng đến máy chủ
+    //         await authAPI().patch(`${endpoints.orders}${orderId}/`, { status: "Chờ giao hàng" });
     
-            // Cập nhật danh sách đơn hàng chờ xác nhận
-            const updatedOrders = waitingConfirmationOrders.filter(order => order.id !== orderId);
-            setWaitingConfirmationOrders(updatedOrders);
-            setNumberOfConfirmationOrders(updatedOrders.length);
+    //         // Cập nhật danh sách đơn hàng chờ xác nhận
+    //         const updatedOrders = waitingConfirmationOrders.filter(order => order.id !== orderId);
+    //         setWaitingConfirmationOrders(updatedOrders);
+    //         setNumberOfConfirmationOrders(updatedOrders.length);
 
-            // Lưu trạng thái mới vào AsyncStorage
-            await AsyncStorage.setItem(key, JSON.stringify(updatedOrders));
+    //         // Lưu trạng thái mới vào AsyncStorage
+    //         await AsyncStorage.setItem(key, JSON.stringify(updatedOrders));
             
-            console.log(`Đơn hàng ${orderId} đã chuyển sang trạng thái Chờ giao hàng`);
-        } catch (error) {
-            console.error(`Lỗi khi cập nhật trạng thái đơn hàng ${orderId}:`, error.message);
-        }
-    };
+    //         console.log(`Đơn hàng ${orderId} đã chuyển sang trạng thái Chờ giao hàng`);
+    //     } catch (error) {
+    //         console.error(`Lỗi khi cập nhật trạng thái đơn hàng ${orderId}:`, error.message);
+    //     }
+    // };
 
     const handleOrderPress = (orderId) => {
-        // Navigate to the order detail screen with orderId and previousScreen parameters
         navigation.navigate('OrderDetail', { orderId: orderId, previousScreen: 'WaitConfirmation'});
     };
+
 
     const cancelOrder = async orderId => {
         try {
@@ -110,7 +101,7 @@ export default WaitingConfirmationScreen = ({navigation, route, previousScreen})
             <View style={styles.orderContainer}>
                 <Text style={styles.orderText}>Mã đơn hàng: {item.id}</Text>
                 <Text style={styles.orderText}>Ngày đặt: {moment(item.created_date).format('DD/MM/YYYY HH:mm')}</Text>
-                <Text style={styles.orderText}>Tổng tiền: {item.totalPrice} đ</Text>
+                <Text style={styles.orderText}>Tổng tiền: {formatPrice(item.totalPrice)}</Text>
                 <TouchableOpacity style={styles.cancelButton} onPress={() => cancelOrder(item.id)}>
                     <Text style={styles.cancelButtonText}>Hủy đơn</Text>
                 </TouchableOpacity>
@@ -122,10 +113,10 @@ export default WaitingConfirmationScreen = ({navigation, route, previousScreen})
         <SafeAreaView style={MyStyle.setForm}>
             <View style={{height: '10%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#ccc'}}>
                 <TouchableOpacity onPress={() => navigation.navigate("Setting",{previousScreen: "WaitConfirmation",numberOfConfirmationOrders: numberOfConfirmationOrders})}
-                            style={{width: 40, height: 40, zIndex: 1, position: 'absolute', top: 20, left: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
+                            style={{width: 40, height: 40, zIndex: 1, position: 'absolute', top: 30, left: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
                     <Icon style={{fontSize: 15, color: '#fff'}} name="chevron-left"/>
                 </TouchableOpacity>
-                <Text style={{fontSize: 25, fontWeight: 'bold'}}>Chờ xác nhận</Text>
+                <Text style={{fontSize: 25, fontWeight: 'bold', top: 5}}>Chờ xác nhận</Text>
             </View>
             {numberOfConfirmationOrders > 0 ? (
                 <View style={{flex: 1}}>
