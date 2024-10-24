@@ -16,6 +16,7 @@ const FavoritesScreen = ({ route }) => {
     const navigation = useNavigation();
     const { width } = useWindowDimensions();
 
+
     useFocusEffect(
         useCallback(() => {
             if (route.params && route.params.previousScreen) {
@@ -26,7 +27,7 @@ const FavoritesScreen = ({ route }) => {
 
     useEffect(() => {
         loadProductFavorites();
-    }, []);
+    }, [favoriteItems]);
 
     const handleGoBack = () => {
         if (previousScreen) {
@@ -72,7 +73,7 @@ const FavoritesScreen = ({ route }) => {
                         <Image source={{ uri: product.image }} style={styles.productImage} />
                         <Text style={styles.productDescriptionTitle}>Tên: {product.name}</Text>
                         <Text style={styles.productDescriptionTitle}>Giá: {formatPrice(product.priceProduct)}</Text>
-                        <TouchableOpacity onPress={() => removeFavorite(product.productId)} style={styles.removeButton}>
+                        <TouchableOpacity onPress={() => removeFavorite(product.id)} style={styles.removeButton}>
                             <Text style={styles.removeButtonText}>Remove</Text>
                         </TouchableOpacity>
                         <RenderHTML contentWidth={width} style={styles.productDescription} source={{ html: product.content }} />
@@ -94,6 +95,7 @@ const styles = StyleSheet.create({
         padding: 15,
         borderBottomWidth: 1,
         borderBottomColor: '#ccc',
+        top: 20,
     },
     backButton: {
         width: 40,
@@ -116,6 +118,7 @@ const styles = StyleSheet.create({
     content: {
         flexGrow: 1,
         padding: 15,
+        marginTop: 20,
     },
     productImage: {
         width: '100%',

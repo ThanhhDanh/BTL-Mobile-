@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MyContext from './MyContext';
+import { authAPI, endpoints } from '../../Configs/APIs';
 
 const CartContext = createContext();
 
@@ -129,9 +130,21 @@ export const CartProvider = ({ children }) => {
     setFavoriteItems(prevItems => [...prevItems, { userId: user.id, username: user.username, productId: product.id }]);
 };
 
-    const removeFavorite = (productId) => {
+const removeFavorite = async (productId) => {
+    try {
+        let accessToken = await AsyncStorage.getItem("access-token");
+        // Gửi yêu cầu PATCH để cập nhật active thành false
+        await authAPI(accessToken).patch(endpoints['like-product'](productId), { likes: [{ active: false }] });
+        
+        // Cập nhật lại state local
         setFavoriteItems(prevItems => prevItems.filter(item => item.productId !== productId));
-    };
+        
+        // Lưu lại vào AsyncStorage
+        saveCartData();
+    } catch (error) {
+        console.error('Failed to remove favorite:', error);
+    }
+};
 
     return (
         <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, setCartItems, updateCartItemQuantity, shippingOrders, setShippingOrders, waitingOrders, setWaitingOrders, addSelectedProduct, removeSelectedProduct, favoriteItems, addFavorite, removeFavorite }}>

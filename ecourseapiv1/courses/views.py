@@ -277,7 +277,8 @@ class MomoViewSet(viewsets.ViewSet):
         print(request_data)
 
         endpoint = "https://test-payment.momo.vn/v2/gateway/api/create"
-        ipnUrl = ""
+        # ipnUrl = "https://thanhdanh.pythonanywhere.com/momo/momo_ipn"
+        ipnUrl = "https://828c-171-243-49-117.ngrok-free.app/momo/momo_ipn/"
 
         accessKey = "F8BBA842ECF85"
         secretKey = "K951B6PE1waDMi640xX08PD3vg6EkVlz"
@@ -286,7 +287,6 @@ class MomoViewSet(viewsets.ViewSet):
         requestId = str(uuid.uuid4())
         amount = request_data.get('price')
         orderId = str(uuid.uuid4())
-        # orderId = total.get('appointment_id')+total.get('user_id')+total.get('booking_date')
 
 
         print('orderInfo' + orderInfo )
@@ -296,7 +296,7 @@ class MomoViewSet(viewsets.ViewSet):
 
         requestType = "captureWallet"
         extraData = ""
-        redirectUrl = ""
+        redirectUrl = "https://828c-171-243-49-117.ngrok-free.app/"
 
         rawSignature = "accessKey=" + accessKey + "&amount=" + amount + "&extraData=" + extraData + "&ipnUrl=" + ipnUrl \
                        + "&orderId=" + orderId + "&orderInfo=" + orderInfo + "&partnerCode=" + partnerCode \
@@ -343,13 +343,15 @@ class MomoViewSet(viewsets.ViewSet):
         if request.method == 'POST':
             try:
                 ipn_data = request.data  # Sử dụng request.data thay vì json.loads(request.data)
+                print(ipn_data)
                 order_info = ipn_data.get('orderInfo')
                 result_code = ipn_data.get('resultCode')
 
                 if result_code == 0:
                     try:
                         order_fee = Orders.objects.get(id=order_info)
-                        order_fee.status = order_fee.EnumStatusFee.DONE
+                        order_fee.statusPayment = 'DONE'
+                        order_fee.status = 'Chờ lấy hàng'
                         order_fee.save()
                         return JsonResponse({'message': 'Payment successful and status updated'}, status=200)
                     except Orders.DoesNotExist:

@@ -130,8 +130,6 @@ const ProductDetails = ({ route, navigation}) => {
     );
 
     const handleGoBack = () => {
-        // console.info(categoryId)
-        // console.info(productDetail.category_id)
         if (previousScreen) {
             navigation.navigate(previousScreen,{ categoryId: categoryId, shopId:shopId, productId: productId});
         } else {
@@ -164,14 +162,17 @@ const ProductDetails = ({ route, navigation}) => {
      });
 
 
-    const loadShopRepliesFromAsyncStorage = async () => {
+     const loadShopRepliesFromAsyncStorage = async () => {
         try {
             const storedReplies = await AsyncStorage.getItem('replies');
+            // console.log('storedReplies: ', storedReplies)
             if (storedReplies) {
                 const parsedReplies = JSON.parse(storedReplies);
+                console.log(parsedReplies[shopId])
                 setShopReplies(parsedReplies[shopId] || {});
+
     
-                // Lấy danh sách avatar của shop từ phản hồi và cập nhật vào state shopAvatars
+                // Fetch avatars for shop replies
                 const avatarPromises = Object.keys(parsedReplies[shopId] || {}).map(async (reviewId) => {
                     const response = await APIs.get(endpoints['shop-details'](shopId));
                     return {
@@ -210,7 +211,7 @@ const ProductDetails = ({ route, navigation}) => {
                     style={{width: 40, height: 40,zIndex: 1, position: 'absolute',top: 40, right: 15, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
                     <Icon style={{fontSize: 20, color: '#fff'}} name="comment"/>
                 </TouchableOpacity>}
-                {user && <TouchableOpacity onPress={() =>navigation.navigate('Cart', {'productDetail': productDetail },{ previousScreen: 'ProductDetail' })}
+                {user && <TouchableOpacity onPress={() =>navigation.navigate('Cart', {'productDetail': productDetail },{ previousScreen: 'ProductDetails' })}
                             style={{width: 40, height: 40,zIndex: 1, position: 'absolute',top:40, right: 90, alignItems: 'center', justifyContent: 'center', borderColor: '#ccc', backgroundColor: 'rgba(0, 0, 0, 0.2)', borderRadius: 50}}>
                             <Icon style={{fontSize: 20, color: '#fff'}} name="cart-shopping"/>
                             {cartItems.length > 0 && <View style={{position: 'absolute', top: -5, right: -5, backgroundColor: 'red', borderRadius: 10, width: 20, height: 20, alignItems: 'center', justifyContent: 'center'}}>
@@ -276,15 +277,13 @@ const ProductDetails = ({ route, navigation}) => {
                                                 </View>
                                             </View>
                                             <View style={{ marginBottom: 10, borderBottomWidth: 1,borderColor: '#ccc'}}>
-                                                {Object.keys(shopReplies).map((reviewId) => (
-                                                    <View key={reviewId} style={{ marginTop: 5, padding: 5}}>
-                                                        <View style={{ flexDirection: 'row-reverse', alignItems: 'center' }}>
-                                                            <Image source={{ uri: shopAvatars[reviewId] }} style={MyStyle.imgComment}/>
-                                                            <Text>{shopReplies[reviewId]}</Text>
-                                                        </View>
-                                                    </View>
-                                                ))}
-                                                {Object.keys(shopReplies).length === 0 && <Text>Chưa có phản hồi từ shop cho sản phẩm này.</Text>}
+                                            {shopReplies[c.id] &&
+                                                <View style={{ marginTop: 5, padding: 5, flexDirection: 'row-reverse', alignItems: 'center' }}>
+                                                    <Image source={{ uri: shopAvatars[c.id] }} style={MyStyle.imgComment} />
+                                                    <Text>{shopReplies[c.id].content}</Text>
+                                                </View>
+                                            }
+                                            {!shopReplies[c.id] && <Text>Chưa có phản hồi từ shop cho bình luận này.</Text>}
                                             </View>
                                         </View>
                                     </>)}

@@ -63,8 +63,8 @@ export default CheckoutScreen = ({ route, navigation }) => {
 
 
     const [tagList, setTagList] = useState([
-        { id: 1, name: 'Rẻ hơn các loại rẻ', percentage: 80 },
-        { id: 2, name: 'Dùng thử miễn phí 7 ngày', percentage: 50 },
+        { id: 1, name: 'Rẻ hơn các loại rẻ', percentage: 90 },
+        { id: 2, name: 'Dùng thử miễn phí 7 ngày', percentage: 80 },
         { id: 3, name: 'HSSV giảm thêm 500K', percentage: 80 },
         { id: 4, name: 'Tặng thêm 5 ưu đãi khác', percentage: 50 },
         { id: 6, name: 'Thu cũ đổi mới đến 2 triệu', percentage: 50 },
@@ -155,41 +155,39 @@ export default CheckoutScreen = ({ route, navigation }) => {
         
     const handlePayment = async () => {
         if (selectedPaymentMethod.key === "MOMO"){
-            // Xử lý thanh toán qua Momo
-            
-            if (productDetail) {
-                const payload = {
-                    id: productDetail.id.toString(),
-                    price: totalPrice.toString(),
-                };
-            }
-
-            if (selectedCartItems) {
-                selectedCartItems.forEach( item => {
-                    const payload = {
-                        id: item.id.toString(),
-                        price: totalPrice.toString(),
-                    };
-                })
-            }
-            
             try {
-                const inforPay = await APIs.post(endpoints['momo'], payload, {
-                    withCredentials: true,
-                    crossdomain: true,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                console.log("lấy url" + inforPay.data.payUrl);
-                const url = inforPay.data.payUrl;
-                if (url) {
-                    console.log("urllll " + url);
-                    // Mở URL trong trình duyệt
-                    Linking.openURL(url);
+                for (const product of products) {
+                    const payload = {
+                        id: product.id.toString(),
+                        price: totalPrice.toString(), //(product.priceProduct * (quantities.find(q => q.id === product.id).quantity || 1)).toString()
+                        //price: (product.priceProduct * (quantities.find(q => q.id === product.id).quantity || 1)).toString(), 
+                    };
+    
+                    console.log(payload);
+    
+                    const inforPay = await APIs.post(endpoints['momo'], payload, {
+                        withCredentials: true,
+                        crossdomain: true,
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+    
+                    console.log("URL:", inforPay.data.payUrl);
+                    console.log("infoPay:", inforPay.data);
+    
+                    const url = inforPay.data.payUrl;
+                    if (url) {
+                        console.log("Opening URL:", url);
+                        Linking.openURL(url);
+                    }
+                    // if(inforPay.data.resultCode === 0) {
+                    //     navigation.goBack();
+                    // }
                 }
             } catch (error) {
-                console.error('Error fetching URL:', error);
+                console.error('Error fetching URL:', error.response ? error.response.data : error.message);
+                Alert.alert('Lỗi', 'Đã xảy ra lỗi khi thực hiện thanh toán. Vui lòng thử lại sau.');
             }
 
             console.log('Thanh toán qua Momo');

@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, TextInput, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, TextInput, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import MyContext from '../Templates/MyContext';
 import { formatPrice, getOrdersByStatus } from '../Utils/Utils';
 import moment from 'moment';
@@ -14,7 +14,8 @@ const WaitDeliveredShop = ({ navigation, route }) => {
     const [replyContent, setReplyContent] = useState({});
     const [showReplyInput, setShowReplyInput] = useState({});
     const [replyInputText, setReplyInputText] = useState({});
-    const { shopId } = route.params || {};
+    const { shopId } = route.params;
+
 
     // Define callback function to update shop replies in ProductDetails
     const updateShopRepliesInProductDetails = useCallback(async (updatedReplies) => {
@@ -107,6 +108,10 @@ const WaitDeliveredShop = ({ navigation, route }) => {
             };
             await storeReplies(updatedReplies);
 
+            // Save the entire updated replyContent to AsyncStorage
+            await AsyncStorage.setItem('replies', JSON.stringify({ ...replyContent, [shopId]: updatedReplies }));
+
+
             // Clear input text after successful submit
             setReplyInputText(prevReplyInputText => ({
                 ...prevReplyInputText,
@@ -122,6 +127,7 @@ const WaitDeliveredShop = ({ navigation, route }) => {
             console.error('Error handling reply submission:', error);
         }
     };
+    // console.log(replyContent)
 
     const storeReplies = async (replies) => {
         try {
@@ -175,21 +181,25 @@ const WaitDeliveredShop = ({ navigation, route }) => {
     );
 
 
+
     const getShopReply = (shopId, reviewId) => {
-        if (replyContent[shopId] && replyContent[shopId][reviewId]) {
-            const { content, avatar, timestamp } = replyContent[shopId][reviewId];
+        // Kiểm tra nếu reviewId tồn tại trong replyContent
+        if (replyContent[reviewId]) {
+            // Nếu replyContent[reviewId] có cấu trúc phản hồi của shop
+            const { content, avatar, timestamp } = replyContent[reviewId];
             return (
                 <View style={styles.replyContainer}>
-                    <Text style={{textAlign: 'right'}}>Phản hồi của shop: </Text>
-                    <Text style={styles.replyText}>{replyContent[shopId][reviewId]}</Text>
+                    <Text style={{ textAlign: 'right' }}>Phản hồi của shop: </Text>
                     <View style={styles.replyContentContainer}>
-                        <Image source={{ uri: avatar }} style={styles.replyAvatar} />
                         <Text style={styles.replyText}>{content}</Text>
-                        <Text style={styles.replyTimestamp}>{moment(timestamp).format('DD/MM/YYYY HH:mm')}</Text>
+                        <Image source={{ uri: avatar }} style={styles.replyAvatar} />
                     </View>
+                    <Text style={styles.replyTimestamp}>{moment(timestamp).format('DD/MM/YYYY HH:mm')}</Text>
                 </View>
             );
         }
+    
+        // Nếu không có phản hồi nào thỏa mãn, trả về null
         return null;
     };
 
@@ -208,6 +218,7 @@ const WaitDeliveredShop = ({ navigation, route }) => {
                 </TouchableOpacity>
                 <Text style={styles.headerText}>Đã giao hàng</Text>
             </View>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} />
             <View style={styles.ordersContainer}>
                 {deliveredOrders.length > 0 ? (
                     <View style={{ flex: 1 }}>
@@ -345,6 +356,7 @@ const styles = StyleSheet.create({
     replyContentContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'flex-end',
     },
     replyTimestamp: {
         marginLeft: 'auto',
@@ -355,7 +367,7 @@ const styles = StyleSheet.create({
         width: 30,
         height: 30,
         borderRadius: 15,
-        marginRight: 10,
+        marginLeft: 10,
     },
 });
 

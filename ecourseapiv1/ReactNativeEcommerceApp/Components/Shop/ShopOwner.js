@@ -1,9 +1,10 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Dimensions, Image } from 'react-native';
 import APIs, { authAPI, endpoints } from '../../Configs/APIs';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import MyContext from '../Templates/MyContext';
 import { getOrdersByStatus } from '../Utils/Utils';
+import { useFocusEffect } from '@react-navigation/native';
 
 const windowHeight = Dimensions.get('window').height;
 
@@ -70,9 +71,11 @@ const ShopOwner = ({ route, navigation }) => {
         }
     };
 
-    useEffect(()=>{
-        countOrders()
-    },[shopId, currentShopId]);
+    useFocusEffect(
+        useCallback(()=>{
+            countOrders()
+        },[shopId, currentShopId])
+    );
 
     const handleOrderConfirmation = () => {
         countOrders(); // Refresh counts when an order is confirmed

@@ -30,7 +30,7 @@ export default Product = ({previousScreen, categories,  onRatingCalculated, onSa
         try {
             setLoading(true);
             let res = await APIs.get(endpoints['products']);
-            const filterByPrice = res.data.filter(p => p.priceProduct >= 50000000);
+            const filterByPrice = res.data.filter(p => p.priceProduct >= 20000000);
              // Lấy danh sách id của các danh mục từ danh sách sản phẩm đã lọc
             const categoryIds = filterByPrice.map(p => p.category_id);
 
@@ -69,7 +69,7 @@ export default Product = ({previousScreen, categories,  onRatingCalculated, onSa
     };
 
     // Tính toán chiều cao của ScrollView dựa vào số lượng sản phẩm
-    const scrollViewHeight = productPrice.length * 160; // Chiều cao của mỗi sản phẩm là 230
+    const scrollViewHeight = productPrice.length * 140; // Chiều cao của mỗi sản phẩm là 230
 
 
     const isFavorite = (productId) => {
